@@ -14,16 +14,16 @@ class WatermelonGame {
 
         // 水果定义（10个等级）- 半径将根据画布宽度动态计算
         this.baseFruitTypes = [
-            { emoji: '🍇', scale: 0.04, color: '#9b59b6', score: 1 },
-            { emoji: '🍒', scale: 0.05, color: '#e74c3c', score: 2 },
-            { emoji: '🍊', scale: 0.06, color: '#f39c12', score: 4 },
-            { emoji: '🍋', scale: 0.07, color: '#f1c40f', score: 8 },
-            { emoji: '🥝', scale: 0.08, color: '#2ecc71', score: 16 },
-            { emoji: '🍅', scale: 0.09, color: '#e67e22', score: 32 },
-            { emoji: '🍑', scale: 0.10, color: '#ff9ff3', score: 64 },
-            { emoji: '🍍', scale: 0.11, color: '#fdcb6e', score: 128 },
-            { emoji: '🥥', scale: 0.12, color: '#dfe6e9', score: 256 },
-            { emoji: '🍉', scale: 0.13, color: '#27ae60', score: 512 }
+            { emoji: '🍇', scale: 0.065, color: '#9b59b6', score: 1 },
+            { emoji: '🍒', scale: 0.075, color: '#e74c3c', score: 2 },
+            { emoji: '🍊', scale: 0.085, color: '#f39c12', score: 4 },
+            { emoji: '🍋', scale: 0.095, color: '#f1c40f', score: 8 },
+            { emoji: '🥝', scale: 0.105, color: '#2ecc71', score: 16 },
+            { emoji: '🍅', scale: 0.115, color: '#e67e22', score: 32 },
+            { emoji: '🍑', scale: 0.125, color: '#ff9ff3', score: 64 },
+            { emoji: '🍍', scale: 0.135, color: '#fdcb6e', score: 128 },
+            { emoji: '🥥', scale: 0.145, color: '#dfe6e9', score: 256 },
+            { emoji: '🍉', scale: 0.155, color: '#27ae60', score: 512 }
         ];
 
         // 物理配置
@@ -48,6 +48,10 @@ class WatermelonGame {
         this.dropCooldown = 300; // 毫秒
         this.pendingMerges = []; // 待处理的合并（延迟合并避免遍历时修改数组）
 
+        // 版本信息
+        this.version = 'v2.0.0';
+        this.updateDate = '2026-02-27';
+
         // 初始化
         this.init();
     }
@@ -56,20 +60,19 @@ class WatermelonGame {
         // 计算可用高度（减去其他UI元素的高度）
         const headerHeight = 80; // 标题+分数板
         const controlsHeight = 60; // 按钮
-        const instructionsHeight = 80; // 游戏说明（现在更紧凑）
-        const padding = 50; // 容器padding和其他间距
+        const padding = 20; // 容器padding
         const modalSpace = 100; // 模态框预留空间
 
-        const availableHeight = window.innerHeight - headerHeight - controlsHeight - instructionsHeight - padding - modalSpace;
-        const maxWidth = Math.min(window.innerWidth - 40, 400);
+        const availableHeight = window.innerHeight - headerHeight - controlsHeight - padding - modalSpace;
+        const maxWidth = window.innerWidth - 40; // 尽可能宽
         const aspectRatio = 2 / 3; // 宽高比 2:3
 
         // 根据可用高度计算最大宽度
         const maxCanvasHeight = availableHeight;
         const maxCanvasWidth = maxCanvasHeight * aspectRatio;
 
-        // 取较小值作为画布宽度
-        const canvasWidth = Math.min(maxWidth, maxCanvasWidth);
+        // 取较小值作为画布宽度，但至少保证最小尺寸
+        const canvasWidth = Math.max(320, Math.min(maxWidth, maxCanvasWidth));
         const canvasHeight = canvasWidth / aspectRatio;
 
         this.canvas.width = canvasWidth;
@@ -101,6 +104,12 @@ class WatermelonGame {
         });
         document.getElementById('closeRulesBtn').addEventListener('click', () => {
             document.getElementById('rulesModal').classList.add('hidden');
+        });
+        document.getElementById('versionBtn').addEventListener('click', () => {
+            this.showVersionModal();
+        });
+        document.getElementById('closeVersionBtn').addEventListener('click', () => {
+            document.getElementById('versionModal').classList.add('hidden');
         });
         document.getElementById('modalRestartBtn').addEventListener('click', () => {
             document.getElementById('gameOverModal').classList.add('hidden');
@@ -501,6 +510,12 @@ class WatermelonGame {
         this.gameState = 'gameover';
         document.getElementById('finalScore').textContent = this.score;
         document.getElementById('gameOverModal').classList.remove('hidden');
+    }
+
+    showVersionModal() {
+        document.getElementById('currentVersion').textContent = this.version;
+        document.getElementById('updateTime').textContent = this.updateDate;
+        document.getElementById('versionModal').classList.remove('hidden');
     }
 
     draw() {
