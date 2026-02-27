@@ -46,6 +46,7 @@ class WatermelonGame {
         this.particles = [];
         this.lastDropTime = 0;
         this.dropCooldown = 300; // 毫秒
+        this.pendingMerges = []; // 待处理的合并（延迟合并避免遍历时修改数组）
 
         // 初始化
         this.init();
@@ -268,6 +269,9 @@ class WatermelonGame {
             });
         }
 
+        // 处理延迟合并（避免遍历时修改数组）
+        this.processPendingMerges();
+
         // 检查游戏结束（只检查静止的水果）
         for (let i = 0; i < this.fruits.length; i++) {
             const fruit = this.fruits[i];
@@ -361,9 +365,13 @@ class WatermelonGame {
                     activeFruit.typeIndex === other.typeIndex &&
                     activeFruit.typeIndex < this.baseFruitTypes.length - 1) {
 
-                    // 合并水果
-                    this.mergeFruits(activeFruit, other, activeIndex, i);
-                    return;
+                    // 延迟合并：记录待合并项，不立即修改数组
+                    this.pendingMerges.push({
+                        fruit1: activeFruit,
+                        fruit2: other,
+                        index1: activeIndex,
+                        index2: i
+                    });
                 }
             }
         }
@@ -384,20 +392,52 @@ class WatermelonGame {
         // 加分
         this.addScore(newType.score * 2);
 
-        // 移除旧水果
-        this.fruits.splice(Math.max(index1, index2), 1);
-        this.fruits.splice(Math.min(index1, index2), 1);
+        // 返回合并后的新水果信息，不直接修改数组
+        return {
+            index1: Math.min(index1, index2),
+            index2: Math.max(index1, index2),
+            newFruit: {
+                x: newX,
+                y: newY,
+                radius: newType.radius,
+                typeIndex: newTypeIndex,
+                vx: 0,
+                vy: 0,
+                isActive: false
+            }
+        };
+    }
 
-        // 添加新水果
-        this.fruits.push({
-            x: newX,
-            y: newY,
-            radius: newType.radius,
-            typeIndex: newTypeIndex,
-            vx: 0,
-            vy: 0,
-            isActive: false
-        });
+    processPendingMerges() {
+        if (this.pendingMerges.length === 0) return;
+
+        // 去重：确保每个水果只被合并一次
+        const mergedIndices = new Set();
+        const validMerges = [];
+
+        for (const merge of this.pendingMerges) {
+            if (!mergedIndices.has(merge.index1) && !mergedIndices.has(merge.index2)) {
+                validMerges.push(merge);
+                mergedIndices.add(merge.index1);
+                mergedIndices.add(merge.index2);
+            }
+        }
+
+        // 清空待合并列表
+        this.pendingMerges = [];
+
+        // 按索引降序排序，确保删除时不影响后续索引
+        validMerges.sort((a, b) => b.index2 - a.index2);
+
+        // 执行合并
+        for (const merge of validMerges) {
+            const result = this.mergeFruits(merge.fruit1, merge.fruit2, merge.index1, merge.index2);
+            // 删除旧水果
+            this.fruits.splice(result.index2, 1);
+            this.fruits.splice(result.index1, 1);
+            // 添加新水果
+            this.fruits.push(result.newFruit);
+        }
     }
 
     createMergeParticles(x, y, radius, typeIndex) {
