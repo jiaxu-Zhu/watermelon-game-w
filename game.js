@@ -33,7 +33,7 @@ class WatermelonGame {
             bounce: 0.3,
             wallBounce: 0.4,
             velocityThreshold: 0.1,
-            collisionIterations: 8,
+            collisionIterations: 4, // 每帧碰撞检测迭代次数
             dangerLineRatio: 0.15, // 危险线在顶部15%位置
             dropPosition: this.canvas.width / 2
         };
@@ -253,8 +253,13 @@ class WatermelonGame {
                     }
                 }
 
-                // 碰撞检测
-                this.checkCollisions(fruit, i);
+                // 多次迭代碰撞检测（解决重叠问题）
+                for (let iter = 0; iter < this.config.collisionIterations; iter++) {
+                    this.checkCollisions(fruit, i);
+                    // 每次迭代后强制边界限制
+                    fruit.x = Math.max(fruit.radius, Math.min(this.canvas.width - fruit.radius, fruit.x));
+                    fruit.y = Math.max(fruit.radius, Math.min(this.canvas.height - fruit.radius, fruit.y));
+                }
             }
 
             // 强制边界限制（防止任何情况下水果出界）
@@ -286,7 +291,7 @@ class WatermelonGame {
             const distance = Math.sqrt(dx * dx + dy * dy);
             const minDist = activeFruit.radius + other.radius;
 
-            if (distance < minDist) {
+            if (distance < minDist && distance > 0) {
                 // 碰撞响应
                 const angle = Math.atan2(dy, dx);
                 const sin = Math.sin(angle);
@@ -311,14 +316,20 @@ class WatermelonGame {
                 other.vx = newVx2 * cos - vy2 * sin;
                 other.vy = vy2 * cos + newVx2 * sin;
 
-                // 分离重叠的水果
+                // 分离重叠的水果（使用更精确的分离）
                 const overlap = minDist - distance;
-                const separationX = overlap * cos * 0.5;
-                const separationY = overlap * sin * 0.5;
-                activeFruit.x += separationX;
-                activeFruit.y += separationY;
-                other.x -= separationX;
-                other.y -= separationY;
+                // 根据质量比例分配分离距离
+                const totalRadius = activeFruit.radius + other.radius;
+                const ratio1 = other.radius / totalRadius;
+                const ratio2 = activeFruit.radius / totalRadius;
+
+                const separationX = overlap * cos;
+                const separationY = overlap * sin;
+
+                activeFruit.x += separationX * ratio1;
+                activeFruit.y += separationY * ratio1;
+                other.x -= separationX * ratio2;
+                other.y -= separationY * ratio2;
 
                 // 立即检查分离后的位置是否超出边界，如果超出则强制拉回
                 activeFruit.x = Math.max(activeFruit.radius, Math.min(this.canvas.width - activeFruit.radius, activeFruit.x));
