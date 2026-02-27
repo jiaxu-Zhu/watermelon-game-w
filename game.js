@@ -30,16 +30,16 @@ class WatermelonGame {
         // 水果类型定义（从最小到最大）- 基于画布宽度动态调整
         const baseRadius = this.config.width / 400 * 15; // 基于400px宽度的基准
         this.fruitTypes = [
-            { name: '葡萄', radius: baseRadius * 1.0, color: '#9C27B0', score: 1 },
-            { name: '樱桃', radius: baseRadius * 1.33, color: '#E91E63', score: 2 },
-            { name: '橘子', radius: baseRadius * 1.67, color: '#FF9800', score: 4 },
-            { name: '柠檬', radius: baseRadius * 2.0, color: '#FFEB3B', score: 8 },
-            { name: '猕猴桃', radius: baseRadius * 2.33, color: '#8BC34A', score: 16 },
-            { name: '番茄', radius: baseRadius * 2.67, color: '#F44336', score: 32 },
-            { name: '桃子', radius: baseRadius * 3.0, color: '#FFCCBC', score: 64 },
-            { name: '菠萝', radius: baseRadius * 3.33, color: '#FFC107', score: 128 },
-            { name: '椰子', radius: baseRadius * 3.67, color: '#795548', score: 256 },
-            { name: '西瓜', radius: baseRadius * 4.0, color: '#4CAF50', score: 512 }
+            { name: '葡萄', radius: baseRadius * 1.0, emoji: '🍇', score: 1 },
+            { name: '樱桃', radius: baseRadius * 1.33, emoji: '🍒', score: 2 },
+            { name: '橘子', radius: baseRadius * 1.67, emoji: '🍊', score: 4 },
+            { name: '柠檬', radius: baseRadius * 2.0, emoji: '🍋', score: 8 },
+            { name: '猕猴桃', radius: baseRadius * 2.33, emoji: '🥝', score: 16 },
+            { name: '番茄', radius: baseRadius * 2.67, emoji: '🍅', score: 32 },
+            { name: '桃子', radius: baseRadius * 3.0, emoji: '🍑', score: 64 },
+            { name: '菠萝', radius: baseRadius * 3.33, emoji: '🍍', score: 128 },
+            { name: '椰子', radius: baseRadius * 3.67, emoji: '🥥', score: 256 },
+            { name: '西瓜', radius: baseRadius * 4.0, emoji: '🍉', score: 512 }
         ];
 
         this.fruits = [];
@@ -140,7 +140,7 @@ class WatermelonGame {
             x: this.dropPosition,
             y: this.config.dangerLine + type.radius + 20, // 确保在危险线下方
             radius: type.radius,
-            color: type.color,
+            emoji: type.emoji,
             typeIndex: this.nextFruitType,
             vx: 0,
             vy: 0,
@@ -313,7 +313,7 @@ class WatermelonGame {
             x: newX,
             y: newY,
             radius: newType.radius,
-            color: newType.color,
+            emoji: newType.emoji,
             typeIndex: newTypeIndex,
             vx: 0,
             vy: 0,
@@ -325,10 +325,10 @@ class WatermelonGame {
         this.updateUI();
 
         // 播放合成效果（可以添加动画）
-        this.playMergeEffect(newX, newY, newType.color);
+        this.playMergeEffect(newX, newY, newType.emoji);
     }
 
-    playMergeEffect(x, y, color) {
+    playMergeEffect(x, y, emoji) {
         // 简单的视觉反馈 - 可以扩展为粒子效果
         // 这里只是占位，实际可以添加更多效果
     }
@@ -408,22 +408,11 @@ class WatermelonGame {
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         this.ctx.fill();
 
-        // 绘制水果主体
-        this.ctx.beginPath();
-        this.ctx.arc(fruit.x, fruit.y, fruit.radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = fruit.color;
-        this.ctx.fill();
-
-        // 绘制高光
-        this.ctx.beginPath();
-        this.ctx.arc(fruit.x - fruit.radius * 0.3, fruit.y - fruit.radius * 0.3, fruit.radius * 0.3, 0, Math.PI * 2);
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        this.ctx.fill();
-
-        // 绘制边框
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
+        // 绘制水果emoji
+        this.ctx.font = `${fruit.radius * 2}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(fruit.emoji, fruit.x, fruit.y + fruit.radius * 0.1); // 微调垂直位置
 
         this.ctx.restore();
     }
@@ -445,17 +434,11 @@ class WatermelonGame {
             this.nextCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
             this.nextCtx.fill();
 
-            // 绘制水果
-            this.nextCtx.beginPath();
-            this.nextCtx.arc(centerX, centerY, type.radius * scale, 0, Math.PI * 2);
-            this.nextCtx.fillStyle = type.color;
-            this.nextCtx.fill();
-
-            // 绘制高光
-            this.nextCtx.beginPath();
-            this.nextCtx.arc(centerX - type.radius * scale * 0.3, centerY - type.radius * scale * 0.3, type.radius * scale * 0.3, 0, Math.PI * 2);
-            this.nextCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-            this.nextCtx.fill();
+            // 绘制水果emoji
+            this.nextCtx.font = `${type.radius * scale * 2}px Arial`;
+            this.nextCtx.textAlign = 'center';
+            this.nextCtx.textBaseline = 'middle';
+            this.nextCtx.fillText(type.emoji, centerX, centerY + type.radius * scale * 0.1);
 
             this.nextCtx.restore();
         }
