@@ -10,6 +10,9 @@
     <div class="game-container">
         <header class="game-header">
             <h1>🍉 合成大西瓜</h1>
+            <div class="header-actions">
+                <button id="versionBtn" class="btn btn-icon" title="版本信息">ℹ️</button>
+            </div>
             <div class="score-board">
                 <div class="score-item">
                     <span class="label">得分</span>
@@ -53,6 +56,39 @@
                 <li>📱 支持手机端和电脑端</li>
             </ul>
             <button id="closeRulesBtn" class="btn btn-primary" style="margin-top: 20px;">知道了</button>
+        </div>
+    </div>
+
+    <div id="versionModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>版本信息</h2>
+            <div style="text-align: left; font-size: 0.9rem; line-height: 1.8;">
+                <p><strong>当前版本：</strong><span id="currentVersion">v2.0.0</span></p>
+                <p><strong>更新时间：</strong><span id="updateTime">2026-02-27</span></p>
+                <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
+                <h3 style="font-size: 1rem; margin-bottom: 10px;">更新日志</h3>
+                <div id="changelog" style="max-height: 200px; overflow-y: auto; padding-right: 10px;">
+                    <p><strong>v2.0.0 (2026-02-27)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>✨ 全新精美界面设计</li>
+                        <li>🎨 渐变背景、圆角卡片、阴影效果</li>
+                        <li>💥 添加粒子特效：水果合并时的爆炸效果</li>
+                        <li>📱 优化响应式设计：完美适配移动端和桌面端</li>
+                        <li>🎯 添加预览轨迹：显示水果下落路径</li>
+                        <li>💾 本地存储最高分</li>
+                        <li>🔄 更流畅的动画和交互体验</li>
+                    </ul>
+                    <p><strong>v1.4.0 (2026-02-27)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>🔧 修复点击水果立即游戏结束的问题</li>
+                    </ul>
+                    <p><strong>v1.3.0 (2026-02-27)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>🔧 持续优化：性能改进、用户体验提升、代码质量重构</li>
+                    </ul>
+                </div>
+            </div>
+            <button id="closeVersionBtn" class="btn btn-primary" style="margin-top: 20px;">关闭</button>
         </div>
     </div>
 
