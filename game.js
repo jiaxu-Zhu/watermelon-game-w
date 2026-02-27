@@ -15,14 +15,17 @@ class WatermelonGame {
         this.config = {
             width: canvasWidth,
             height: canvasHeight,
-            gravity: 0.8, // 增加重力，让水果下落更快
-            friction: 0.98,
-            bounce: 0.2,
-            wallBounce: 0.4,
+            gravity: 0.6, // 调整重力，让下落更自然
+            friction: 0.99,
+            bounce: 0.15,
+            wallBounce: 0.3,
             fruitRadius: 20,
             dropInterval: 800,
             maxFruits: 50,
-            dangerLine: 80 // 危险线位置
+            dangerLine: 80, // 危险线位置
+            velocityThreshold: 0.3, // 速度阈值，低于此值停止
+            collisionIterations: 3, // 碰撞检测迭代次数
+            gridCellSize: 100 // 空间分区网格大小
         };
 
         // 版本信息
@@ -56,6 +59,7 @@ class WatermelonGame {
         this.lastDropTime = 0;
         this.dropPosition = this.config.width / 2;
         this.mouseX = this.config.width / 2;
+        this.spatialGrid = null; // 空间分区网格
 
         this.init();
     }
@@ -208,7 +212,7 @@ class WatermelonGame {
                     fruit.vy = -fruit.vy * this.config.bounce;
 
                     // 如果速度很小，停止弹跳并标记为不活跃
-                    if (Math.abs(fruit.vy) < 0.5 && Math.abs(fruit.vx) < 0.5) {
+                    if (Math.abs(fruit.vy) < this.config.velocityThreshold && Math.abs(fruit.vx) < this.config.velocityThreshold) {
                         fruit.vy = 0;
                         fruit.vx = 0;
                         fruit.isActive = false;
@@ -217,46 +221,17 @@ class WatermelonGame {
             }
         }
 
-        // 边界约束 - 对所有水果（包括静止的）
+        // 边界约束 - 对所有静止水果
         for (const fruit of this.fruits) {
-            fruit.x = Math.max(fruit.radius, Math.min(this.config.width - fruit.radius, fruit.x));
-            fruit.y = Math.max(fruit.radius, Math.min(this.config.height - fruit.radius, fruit.y));
-        }
-
-        // 重叠检测和分离 - 多次迭代确保稳定
-        for (let iter = 0; iter < 3; iter++) {
-            for (let i = 0; i < this.fruits.length; i++) {
-                for (let j = i + 1; j < this.fruits.length; j++) {
-                    const f1 = this.fruits[i];
-                    const f2 = this.fruits[j];
-
-                    const dx = f2.x - f1.x;
-                    const dy = f2.y - f1.y;
-                    const distanceSq = dx * dx + dy * dy;
-                    const minDistance = f1.radius + f2.radius;
-                    const minDistanceSq = minDistance * minDistance;
-
-                    if (distanceSq < minDistanceSq && distanceSq > 0) {
-                        const distance = Math.sqrt(distanceSq);
-                        const overlap = minDistance - distance;
-                        const separationX = (dx / distance) * overlap * 0.5;
-                        const separationY = (dy / distance) * overlap * 0.5;
-
-                        // 分离水果
-                        f1.x -= separationX;
-                        f1.y -= separationY;
-                        f2.x += separationX;
-                        f2.y += separationY;
-
-                        // 确保分离后仍在边界内
-                        f1.x = Math.max(f1.radius, Math.min(this.config.width - f1.radius, f1.x));
-                        f1.y = Math.max(f1.radius, Math.min(this.config.height - f1.radius, f1.y));
-                        f2.x = Math.max(f2.radius, Math.min(this.config.width - f2.radius, f2.x));
-                        f2.y = Math.max(f2.radius, Math.min(this.config.height - f2.radius, f2.y));
-                    }
-                }
+            if (!fruit.isActive) {
+                fruit.x = Math.max(fruit.radius, Math.min(this.config.width - fruit.radius, fruit.x));
+                fruit.y = Math.max(fruit.radius, Math.min(this.config.height - fruit.radius, fruit.y));
             }
         }
+
+        // 使用空间分区进行重叠检测和分离
+        this.updateSpatialGrid();
+        this.resolveCollisionsWithSpatialGrid();
 
         // 碰撞检测和合成
         this.checkCollisions();
@@ -368,6 +343,127 @@ class WatermelonGame {
         }
     }
 
+    // 空间分区相关方法
+    updateSpatialGrid() {
+        const cols = Math.ceil(this.config.width / this.config.gridCellSize);
+        const rows = Math.ceil(this.config.height / this.config.gridCellSize);
+        this.spatialGrid = new Array(cols * rows).fill(null).map(() => []);
+
+        // 将所有静止水果放入网格
+        for (let i = 0; i < this.fruits.length; i++) {
+            const fruit = this.fruits[i];
+            if (!fruit.isActive) {
+                const col = Math.floor(fruit.x / this.config.gridCellSize);
+                const row = Math.floor(fruit.y / this.config.gridCellSize);
+                const index = row * cols + col;
+                if (index >= 0 && index < this.spatialGrid.length) {
+                    this.spatialGrid[index].push(i);
+                }
+            }
+        }
+    }
+
+    resolveCollisionsWithSpatialGrid() {
+        const cols = Math.ceil(this.config.width / this.config.gridCellSize);
+        const cellSize = this.config.gridCellSize;
+
+        for (let row = 0; row < Math.ceil(this.config.height / cellSize); row++) {
+            for (let col = 0; col < cols; col++) {
+                const cellIndex = row * cols + col;
+                const fruitsInCell = this.spatialGrid[cellIndex];
+
+                if (fruitsInCell.length < 2) continue;
+
+                // 检查同一单元格内的水果
+                for (let i = 0; i < fruitsInCell.length; i++) {
+                    for (let j = i + 1; j < fruitsInCell.length; j++) {
+                        const idx1 = fruitsInCell[i];
+                        const idx2 = fruitsInCell[j];
+
+                        if (idx1 >= this.fruits.length || idx2 >= this.fruits.length) continue;
+
+                        const f1 = this.fruits[idx1];
+                        const f2 = this.fruits[idx2];
+
+                        const dx = f2.x - f1.x;
+                        const dy = f2.y - f1.y;
+                        const distanceSq = dx * dx + dy * dy;
+                        const minDistance = f1.radius + f2.radius;
+                        const minDistanceSq = minDistance * minDistance;
+
+                        if (distanceSq < minDistanceSq && distanceSq > 0) {
+                            const distance = Math.sqrt(distanceSq);
+                            const overlap = minDistance - distance;
+                            const separationX = (dx / distance) * overlap * 0.5;
+                            const separationY = (dy / distance) * overlap * 0.5;
+
+                            f1.x -= separationX;
+                            f1.y -= separationY;
+                            f2.x += separationX;
+                            f2.y += separationY;
+
+                            // 确保在边界内
+                            f1.x = Math.max(f1.radius, Math.min(this.config.width - f1.radius, f1.x));
+                            f1.y = Math.max(f1.radius, Math.min(this.config.height - f1.radius, f1.y));
+                            f2.x = Math.max(f2.radius, Math.min(this.config.width - f2.radius, f2.x));
+                            f2.y = Math.max(f2.radius, Math.min(this.config.height - f2.radius, f2.y));
+                        }
+                    }
+                }
+
+                // 检查相邻单元格（右、下、右下、左下）
+                const neighbors = [
+                    { c: col + 1, r: row },
+                    { c: col, r: row + 1 },
+                    { c: col + 1, r: row + 1 },
+                    { c: col - 1, r: row + 1 }
+                ];
+
+                for (const neighbor of neighbors) {
+                    if (neighbor.c < 0 || neighbor.c >= cols || neighbor.r < 0 || neighbor.r >= Math.ceil(this.config.height / cellSize)) {
+                        continue;
+                    }
+
+                    const neighborIndex = neighbor.r * cols + neighbor.c;
+                    const neighborFruits = this.spatialGrid[neighborIndex];
+
+                    for (const idx1 of fruitsInCell) {
+                        for (const idx2 of neighborFruits) {
+                            if (idx1 >= this.fruits.length || idx2 >= this.fruits.length) continue;
+
+                            const f1 = this.fruits[idx1];
+                            const f2 = this.fruits[idx2];
+
+                            const dx = f2.x - f1.x;
+                            const dy = f2.y - f1.y;
+                            const distanceSq = dx * dx + dy * dy;
+                            const minDistance = f1.radius + f2.radius;
+                            const minDistanceSq = minDistance * minDistance;
+
+                            if (distanceSq < minDistanceSq && distanceSq > 0) {
+                                const distance = Math.sqrt(distanceSq);
+                                const overlap = minDistance - distance;
+                                const separationX = (dx / distance) * overlap * 0.5;
+                                const separationY = (dy / distance) * overlap * 0.5;
+
+                                f1.x -= separationX;
+                                f1.y -= separationY;
+                                f2.x += separationX;
+                                f2.y += separationY;
+
+                                // 确保在边界内
+                                f1.x = Math.max(f1.radius, Math.min(this.config.width - f1.radius, f1.x));
+                                f1.y = Math.max(f1.radius, Math.min(this.config.height - f1.radius, f1.y));
+                                f2.x = Math.max(f2.radius, Math.min(this.config.width - f2.radius, f2.x));
+                                f2.y = Math.max(f2.radius, Math.min(this.config.height - f2.radius, f2.y));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     mergeFruits(index1, index2) {
         const f1 = this.fruits[index1];
         const f2 = this.fruits[index2];
@@ -452,7 +548,7 @@ class WatermelonGame {
     }
 
     checkGameOver() {
-        // 检查所有静止的水果是否超过危险线
+        // 只检查已落下的静止水果（this.fruits），不检查当前准备下落的 fruit
         for (const fruit of this.fruits) {
             // 只检查不活跃（已静止）的水果
             if (!fruit.isActive && fruit.y - fruit.radius < this.config.dangerLine) {
