@@ -23,17 +23,13 @@
         </header>
 
         <div class="game-area">
-            <div class="next-fruit-preview">
-                <div class="preview-label">下一个</div>
-                <div id="nextFruit" class="next-fruit"></div>
-            </div>
-
             <canvas id="gameCanvas"></canvas>
 
             <div class="game-controls">
                 <button id="startBtn" class="btn btn-primary">开始游戏</button>
                 <button id="pauseBtn" class="btn btn-secondary" disabled>暂停</button>
                 <button id="restartBtn" class="btn btn-secondary" disabled>重新开始</button>
+                <button id="rulesBtn" class="btn btn-secondary">游戏规则</button>
             </div>
         </div>
 
@@ -53,6 +49,20 @@
             <h2>游戏结束</h2>
             <p>你的得分：<span id="finalScore">0</span></p>
             <button id="modalRestartBtn" class="btn btn-primary">再玩一次</button>
+        </div>
+    </div>
+
+    <div id="rulesModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏规则</h2>
+            <ul style="list-style: none; padding: 0; text-align: left; font-size: 0.9rem; line-height: 1.8;">
+                <li>🎯 <strong>点击屏幕</strong>或按<strong>空格键</strong>掉落水果</li>
+                <li>🍎 <strong>相同水果</strong>碰撞会<strong>合成</strong>更大的水果</li>
+                <li>⚠️ 水果超过<strong>危险线</strong>游戏结束</li>
+                <li>🎉 合成<strong>大西瓜</strong>获得最高分！</li>
+                <li>📱 支持手机端和电脑端</li>
+            </ul>
+            <button id="closeRulesBtn" class="btn btn-primary" style="margin-top: 20px;">知道了</button>
         </div>
     </div>
 
