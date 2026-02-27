@@ -27,6 +27,13 @@ class WatermelonGame {
             dangerLine: 80 // 固定危险线位置，确保有足够安全空间
         };
 
+        // 版本信息
+        this.version = {
+            number: 'v1.1.0',
+            info: '优化水果图标，移除阴影，修复边界问题，添加版本信息功能',
+            updateTime: '2026-02-27 09:40'
+        };
+
         // 水果类型定义（从最小到最大）- 基于画布宽度动态调整
         const baseRadius = this.config.width / 400 * 15; // 基于400px宽度的基准
         this.fruitTypes = [
@@ -90,6 +97,7 @@ class WatermelonGame {
         document.getElementById('startBtn').addEventListener('click', () => this.startGame());
         document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
         document.getElementById('restartBtn').addEventListener('click', () => this.restartGame());
+        document.getElementById('versionBtn').addEventListener('click', () => this.showVersionInfo());
     }
 
     startGame() {
@@ -458,6 +466,31 @@ class WatermelonGame {
         this.render();
 
         requestAnimationFrame(() => this.gameLoop());
+    }
+
+    showVersionInfo() {
+        const modal = document.getElementById('versionModal');
+        const closeBtn = modal.querySelector('.close');
+
+        // 更新版本信息
+        document.getElementById('versionNumber').textContent = this.version.number;
+        document.getElementById('versionInfo').textContent = this.version.info;
+        document.getElementById('updateTime').textContent = this.version.updateTime;
+
+        // 显示模态框
+        modal.style.display = 'block';
+
+        // 点击关闭按钮关闭
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        // 点击模态框外部关闭
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
     }
 }
 
