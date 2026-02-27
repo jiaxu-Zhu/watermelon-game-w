@@ -24,7 +24,7 @@ class WatermelonGame {
             fruitRadius: 20,
             dropInterval: 800,
             maxFruits: 50,
-            dangerLine: canvasHeight * 0.15 // 危险线在顶部15%位置
+            dangerLine: 80 // 固定危险线位置，确保有足够安全空间
         };
 
         // 水果类型定义（从最小到最大）- 基于画布宽度动态调整
@@ -225,14 +225,12 @@ class WatermelonGame {
             if (Math.abs(current.vy) < 0.1 && Math.abs(current.vx) < 0.1) {
                 this.fruits.push({...current});
                 this.currentFruit = null;
-
-                // 检查是否可以生成新水果
-                if (now - this.lastDropTime > this.config.dropInterval) {
-                    this.spawnCurrentFruit();
-                    this.lastDropTime = now;
-                }
+                this.lastDropTime = now; // 重置时间，用于下一次生成
             }
-        } else if (!this.currentFruit && now - this.lastDropTime > this.config.dropInterval) {
+        }
+
+        // 如果没有当前水果且超过间隔时间，生成新水果
+        if (!this.currentFruit && now - this.lastDropTime > this.config.dropInterval) {
             this.spawnCurrentFruit();
             this.lastDropTime = now;
         }
