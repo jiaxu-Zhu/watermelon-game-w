@@ -257,6 +257,10 @@ class WatermelonGame {
                 this.checkCollisions(fruit, i);
             }
 
+            // 强制边界限制（防止任何情况下水果出界）
+            fruit.x = Math.max(fruit.radius, Math.min(this.canvas.width - fruit.radius, fruit.x));
+            fruit.y = Math.max(fruit.radius, Math.min(this.canvas.height - fruit.radius, fruit.y));
+
             // 检查游戏结束（只检查静止的水果）
             if (!fruit.isActive && fruit.y - fruit.radius < dangerLine) {
                 this.gameOver();
@@ -266,9 +270,6 @@ class WatermelonGame {
 
         // 更新粒子
         this.updateParticles();
-
-        // 清理超出边界的水果（异常情况）
-        this.fruits = this.fruits.filter(f => f.y - f.radius < this.canvas.height + 100);
     }
 
     checkCollisions(activeFruit, activeIndex) {
@@ -319,10 +320,16 @@ class WatermelonGame {
                 other.x -= separationX;
                 other.y -= separationY;
 
+                // 立即检查分离后的位置是否超出边界，如果超出则强制拉回
+                activeFruit.x = Math.max(activeFruit.radius, Math.min(this.canvas.width - activeFruit.radius, activeFruit.x));
+                activeFruit.y = Math.max(activeFruit.radius, Math.min(this.canvas.height - activeFruit.radius, activeFruit.y));
+                other.x = Math.max(other.radius, Math.min(this.canvas.width - other.radius, other.x));
+                other.y = Math.max(other.radius, Math.min(this.canvas.height - other.radius, other.y));
+
                 // 检查是否相同等级且都静止
                 if (!activeFruit.isActive && !other.isActive &&
                     activeFruit.typeIndex === other.typeIndex &&
-                    activeFruit.typeIndex < this.fruitTypes.length - 1) {
+                    activeFruit.typeIndex < this.baseFruitTypes.length - 1) {
 
                     // 合并水果
                     this.mergeFruits(activeFruit, other, activeIndex, i);
