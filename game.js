@@ -407,17 +407,17 @@ class WatermelonGame {
     drawFruit(fruit) {
         this.ctx.save();
 
-        // 绘制阴影
+        // 绘制轻微阴影（更淡更远）
         this.ctx.beginPath();
-        this.ctx.arc(fruit.x + 3, fruit.y + 3, fruit.radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        this.ctx.arc(fruit.x + 4, fruit.y + 4, fruit.radius, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
         this.ctx.fill();
 
-        // 绘制水果emoji
+        // 绘制水果emoji（鲜艳清晰）
         this.ctx.font = `${fruit.radius * 2}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(fruit.emoji, fruit.x, fruit.y + fruit.radius * 0.1); // 微调垂直位置
+        this.ctx.fillText(fruit.emoji, fruit.x, fruit.y + fruit.radius * 0.1);
 
         this.ctx.restore();
     }
@@ -433,10 +433,10 @@ class WatermelonGame {
 
             this.nextCtx.save();
 
-            // 绘制阴影
+            // 绘制轻微阴影
             this.nextCtx.beginPath();
-            this.nextCtx.arc(centerX + 2, centerY + 2, type.radius * scale, 0, Math.PI * 2);
-            this.nextCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            this.nextCtx.arc(centerX + 3, centerY + 3, type.radius * scale, 0, Math.PI * 2);
+            this.nextCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
             this.nextCtx.fill();
 
             // 绘制水果emoji
