@@ -407,13 +407,7 @@ class WatermelonGame {
     drawFruit(fruit) {
         this.ctx.save();
 
-        // 绘制轻微阴影（更淡更远）
-        this.ctx.beginPath();
-        this.ctx.arc(fruit.x + 4, fruit.y + 4, fruit.radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-        this.ctx.fill();
-
-        // 绘制水果emoji（鲜艳清晰）
+        // 直接绘制水果emoji（无阴影）
         this.ctx.font = `${fruit.radius * 2}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
@@ -433,13 +427,7 @@ class WatermelonGame {
 
             this.nextCtx.save();
 
-            // 绘制轻微阴影
-            this.nextCtx.beginPath();
-            this.nextCtx.arc(centerX + 3, centerY + 3, type.radius * scale, 0, Math.PI * 2);
-            this.nextCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-            this.nextCtx.fill();
-
-            // 绘制水果emoji
+            // 直接绘制水果emoji（无阴影）
             this.nextCtx.font = `${type.radius * scale * 2}px Arial`;
             this.nextCtx.textAlign = 'center';
             this.nextCtx.textBaseline = 'middle';
