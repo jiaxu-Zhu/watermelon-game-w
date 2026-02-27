@@ -30,9 +30,9 @@ class WatermelonGame {
 
         // 版本信息
         this.version = {
-            number: 'v1.3.0',
-            info: '修复点击水果立即游戏结束：降低危险线位置，优化游戏逻辑',
-            updateTime: '2026-02-27 10:16'
+            number: 'v1.4.0',
+            info: '修复点击水果立即游戏结束：提高水果初始位置，确保顶部高于危险线',
+            updateTime: '2026-02-27 12:35'
         };
 
         // 水果类型定义（从最小到最大）- 基于画布宽度动态调整
@@ -146,7 +146,7 @@ class WatermelonGame {
         const type = this.fruitTypes[this.nextFruitType];
         this.currentFruit = {
             x: Math.max(type.radius, Math.min(this.config.width - type.radius, this.dropPosition)),
-            y: 50, // 从顶部开始下落，有足够加速距离
+            y: 100, // 从更高的位置开始下落，确保顶部高于危险线
             radius: type.radius,
             emoji: type.emoji,
             typeIndex: this.nextFruitType,
