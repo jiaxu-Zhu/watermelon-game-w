@@ -33,9 +33,10 @@ class WatermelonGame {
             bounce: 0.3,
             wallBounce: 0.4,
             velocityThreshold: 0.1,
-            collisionIterations: 4, // 每帧碰撞检测迭代次数
+            collisionIterations: 8, // 增加迭代次数，更彻底解决重叠
             dangerLineRatio: 0.15, // 危险线在顶部15%位置
-            dropPosition: this.canvas.width / 2
+            dropPosition: this.canvas.width / 2,
+            minSeparationForce: 0.5 // 最小分离力度
         };
 
         // 游戏对象
@@ -248,21 +249,28 @@ class WatermelonGame {
                         fruit.isActive = false;
                     }
                 }
-
-                // 多次迭代碰撞检测（解决重叠问题）
-                for (let iter = 0; iter < this.config.collisionIterations; iter++) {
-                    this.checkCollisions(fruit, i);
-                    // 每次迭代后强制边界限制
-                    fruit.x = Math.max(fruit.radius, Math.min(this.canvas.width - fruit.radius, fruit.x));
-                    fruit.y = Math.max(fruit.radius, Math.min(this.canvas.height - fruit.radius, fruit.y));
-                }
             }
 
             // 强制边界限制（防止任何情况下水果出界）
             fruit.x = Math.max(fruit.radius, Math.min(this.canvas.width - fruit.radius, fruit.x));
             fruit.y = Math.max(fruit.radius, Math.min(this.canvas.height - fruit.radius, fruit.y));
+        }
 
-            // 检查游戏结束（只检查静止的水果）
+        // 多次迭代碰撞检测（解决重叠问题）- 对所有水果进行全局迭代
+        for (let iter = 0; iter < this.config.collisionIterations; iter++) {
+            for (let i = 0; i < this.fruits.length; i++) {
+                this.checkCollisions(this.fruits[i], i);
+            }
+            // 每次全局迭代后强制所有水果在边界内
+            this.fruits.forEach(fruit => {
+                fruit.x = Math.max(fruit.radius, Math.min(this.canvas.width - fruit.radius, fruit.x));
+                fruit.y = Math.max(fruit.radius, Math.min(this.canvas.height - fruit.radius, fruit.y));
+            });
+        }
+
+        // 检查游戏结束（只检查静止的水果）
+        for (let i = 0; i < this.fruits.length; i++) {
+            const fruit = this.fruits[i];
             if (!fruit.isActive && fruit.y - fruit.radius < dangerLine) {
                 this.gameOver();
                 return;
@@ -279,42 +287,20 @@ class WatermelonGame {
 
             const other = this.fruits[i];
 
-            // 只检查静止的水果
-            if (other.isActive) continue;
-
             const dx = activeFruit.x - other.x;
             const dy = activeFruit.y - other.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             const minDist = activeFruit.radius + other.radius;
 
             if (distance < minDist && distance > 0) {
-                // 碰撞响应
-                const angle = Math.atan2(dy, dx);
-                const sin = Math.sin(angle);
-                const cos = Math.cos(angle);
-
-                // 旋转速度
-                const vx1 = activeFruit.vx * cos + activeFruit.vy * sin;
-                const vy1 = activeFruit.vy * cos - activeFruit.vx * sin;
-                const vx2 = other.vx * cos + other.vy * sin;
-                const vy2 = other.vy * cos - other.vx * sin;
-
-                // 碰撞后的速度（假设质量与面积成正比）
-                const m1 = activeFruit.radius * activeFruit.radius;
-                const m2 = other.radius * other.radius;
-
-                const newVx1 = ((m1 - m2) * vx1 + 2 * m2 * vx2) / (m1 + m2);
-                const newVx2 = ((m2 - m1) * vx2 + 2 * m1 * vx1) / (m1 + m2);
-
-                // 旋转回来
-                activeFruit.vx = newVx1 * cos - vy1 * sin;
-                activeFruit.vy = vy1 * cos + newVx1 * sin;
-                other.vx = newVx2 * cos - vy2 * sin;
-                other.vy = vy2 * cos + newVx2 * sin;
-
-                // 分离重叠的水果（使用更精确的分离）
+                // 计算重叠量
                 const overlap = minDist - distance;
-                // 根据质量比例分配分离距离
+                const angle = Math.atan2(dy, dx);
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+
+                // 分离重叠的水果 - 使用更激进的分离策略
+                // 根据质量比例分配分离距离，但确保最小分离力
                 const totalRadius = activeFruit.radius + other.radius;
                 const ratio1 = other.radius / totalRadius;
                 const ratio2 = activeFruit.radius / totalRadius;
@@ -322,19 +308,56 @@ class WatermelonGame {
                 const separationX = overlap * cos;
                 const separationY = overlap * sin;
 
-                activeFruit.x += separationX * ratio1;
-                activeFruit.y += separationY * ratio1;
-                other.x -= separationX * ratio2;
-                other.y -= separationY * ratio2;
+                // 应用分离，确保至少移动最小分离力
+                const minSeparation = this.config.minSeparationForce;
+                const actualSeparationX = separationX > 0 ? Math.max(separationX, minSeparation * cos) : Math.min(separationX, -minSeparation * cos);
+                const actualSeparationY = separationY > 0 ? Math.max(separationY, minSeparation * sin) : Math.min(separationY, -minSeparation * sin);
 
-                // 立即检查分离后的位置是否超出边界，如果超出则强制拉回
-                activeFruit.x = Math.max(activeFruit.radius, Math.min(this.canvas.width - activeFruit.radius, activeFruit.x));
-                activeFruit.y = Math.max(activeFruit.radius, Math.min(this.canvas.height - activeFruit.radius, activeFruit.y));
-                other.x = Math.max(other.radius, Math.min(this.canvas.width - other.radius, other.x));
-                other.y = Math.max(other.radius, Math.min(this.canvas.height - other.radius, other.y));
+                activeFruit.x += actualSeparationX * ratio1;
+                activeFruit.y += actualSeparationY * ratio1;
+                other.x -= actualSeparationX * ratio2;
+                other.y -= actualSeparationY * ratio2;
 
-                // 检查是否相同等级且都静止
-                if (!activeFruit.isActive && !other.isActive &&
+                // 速度传递（即使一个水果是静止的，也要传递一些速度）
+                const speedTransfer = 0.3; // 速度传递系数
+
+                if (activeFruit.isActive || other.isActive) {
+                    // 旋转速度
+                    const vx1 = activeFruit.vx * cos + activeFruit.vy * sin;
+                    const vy1 = activeFruit.vy * cos - activeFruit.vx * sin;
+                    const vx2 = other.vx * cos + other.vy * sin;
+                    const vy2 = other.vy * cos - other.vx * sin;
+
+                    // 碰撞后的速度（假设质量与面积成正比）
+                    const m1 = activeFruit.radius * activeFruit.radius;
+                    const m2 = other.radius * other.radius;
+
+                    const newVx1 = ((m1 - m2) * vx1 + 2 * m2 * vx2) / (m1 + m2);
+                    const newVx2 = ((m2 - m1) * vx2 + 2 * m1 * vx1) / (m1 + m2);
+
+                    // 旋转回来
+                    activeFruit.vx = newVx1 * cos - vy1 * sin;
+                    activeFruit.vy = vy1 * cos + newVx1 * sin;
+                    other.vx = newVx2 * cos - vy2 * sin;
+                    other.vy = vy2 * cos + newVx2 * sin;
+
+                    // 如果其中一个静止，给静止的施加一点速度，防止再次重叠
+                    if (!activeFruit.isActive && activeFruit.typeIndex !== other.typeIndex) {
+                        activeFruit.vx = other.vx * speedTransfer;
+                        activeFruit.vy = other.vy * speedTransfer;
+                    }
+                    if (!other.isActive && activeFruit.typeIndex !== other.typeIndex) {
+                        other.vx = activeFruit.vx * speedTransfer;
+                        other.vy = activeFruit.vy * speedTransfer;
+                    }
+                }
+
+                // 检查是否相同等级且都静止（或速度很小）
+                const bothAlmostStill = !activeFruit.isActive && !other.isActive &&
+                    Math.abs(activeFruit.vx) < 0.05 && Math.abs(activeFruit.vy) < 0.05 &&
+                    Math.abs(other.vx) < 0.05 && Math.abs(other.vy) < 0.05;
+
+                if (bothAlmostStill &&
                     activeFruit.typeIndex === other.typeIndex &&
                     activeFruit.typeIndex < this.baseFruitTypes.length - 1) {
 
