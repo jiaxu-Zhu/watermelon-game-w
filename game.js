@@ -15,14 +15,14 @@ class WatermelonGame {
         this.config = {
             width: canvasWidth,
             height: canvasHeight,
-            gravity: 0.3,
-            friction: 0.98,
-            bounce: 0.4,
-            wallBounce: 0.6,
+            gravity: 0.5, // 增加重力，让水果下落更快
+            friction: 0.99,
+            bounce: 0.3,
+            wallBounce: 0.5,
             fruitRadius: 20,
             dropInterval: 800,
             maxFruits: 50,
-            dangerLine: 80 // 固定危险线位置，确保有足够安全空间
+            dangerLine: 30 // 危险线更靠近顶部，水果从顶部下落
         };
 
         // 版本信息
@@ -142,7 +142,7 @@ class WatermelonGame {
         const type = this.fruitTypes[this.nextFruitType];
         this.currentFruit = {
             x: Math.max(type.radius, Math.min(this.config.width - type.radius, this.dropPosition)),
-            y: this.config.dangerLine + type.radius + 20, // 确保在危险线下方
+            y: 50, // 从顶部开始下落，有足够加速距离
             radius: type.radius,
             emoji: type.emoji,
             typeIndex: this.nextFruitType,
@@ -159,7 +159,7 @@ class WatermelonGame {
         if (this.gameState !== 'playing' || !this.currentFruit || this.currentFruit.isDropping) return;
 
         this.currentFruit.isDropping = true;
-        this.currentFruit.vy = 0;
+        this.currentFruit.vy = 2; // 给一个初始向下速度，避免漂浮感
     }
 
     update() {
