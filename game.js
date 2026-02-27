@@ -318,8 +318,8 @@ class WatermelonGame {
                 other.x -= actualSeparationX * ratio2;
                 other.y -= actualSeparationY * ratio2;
 
-                // 速度传递（即使一个水果是静止的，也要传递一些速度）
-                const speedTransfer = 0.3; // 速度传递系数
+                // 速度传递（即使一个水果是静止的，也要传递一些速度）- 但相同水果不传递，避免干扰合并
+                const speedTransfer = 0.2; // 速度传递系数
 
                 if (activeFruit.isActive || other.isActive) {
                     // 旋转速度
@@ -341,7 +341,7 @@ class WatermelonGame {
                     other.vx = newVx2 * cos - vy2 * sin;
                     other.vy = vy2 * cos + newVx2 * sin;
 
-                    // 如果其中一个静止，给静止的施加一点速度，防止再次重叠
+                    // 如果其中一个静止且类型不同，给静止的施加一点速度，防止再次重叠
                     if (!activeFruit.isActive && activeFruit.typeIndex !== other.typeIndex) {
                         activeFruit.vx = other.vx * speedTransfer;
                         activeFruit.vy = other.vy * speedTransfer;
@@ -352,12 +352,12 @@ class WatermelonGame {
                     }
                 }
 
-                // 检查是否相同等级且都静止（或速度很小）
-                const bothAlmostStill = !activeFruit.isActive && !other.isActive &&
-                    Math.abs(activeFruit.vx) < 0.05 && Math.abs(activeFruit.vy) < 0.05 &&
-                    Math.abs(other.vx) < 0.05 && Math.abs(other.vy) < 0.05;
+                // 检查是否相同等级且速度都很小（放宽条件，允许合并）
+                // 不要求 isActive 状态，只要求速度足够小
+                const bothSlow = Math.abs(activeFruit.vx) < 0.4 && Math.abs(activeFruit.vy) < 0.4 &&
+                                 Math.abs(other.vx) < 0.4 && Math.abs(other.vy) < 0.4;
 
-                if (bothAlmostStill &&
+                if (bothSlow &&
                     activeFruit.typeIndex === other.typeIndex &&
                     activeFruit.typeIndex < this.baseFruitTypes.length - 1) {
 
