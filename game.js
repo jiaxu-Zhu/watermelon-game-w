@@ -3,8 +3,6 @@ class WatermelonGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.nextCanvas = document.getElementById('nextCanvas');
-        this.nextCtx = this.nextCanvas.getContext('2d');
 
         // 计算合适的画布尺寸（基于屏幕宽度）
         const screenWidth = window.innerWidth || document.documentElement.clientWidth;
@@ -72,8 +70,6 @@ class WatermelonGame {
     setupCanvas() {
         this.canvas.width = this.config.width;
         this.canvas.height = this.config.height;
-        this.nextCanvas.width = 60;
-        this.nextCanvas.height = 60;
     }
 
     setupEventListeners() {
@@ -157,7 +153,6 @@ class WatermelonGame {
 
         // 生成下一个水果
         this.nextFruitType = Math.floor(Math.random() * 3);
-        this.renderNextFruit();
     }
 
     dropFruit() {
@@ -216,10 +211,47 @@ class WatermelonGame {
                     }
                 }
             }
+        }
 
-            // 确保所有水果都在画布内（包括静止的）
-            fruit.x = Math.max(fruit.radius, Math.min(this.config.width - fruit.radius, fruit.x));
-            fruit.y = Math.max(fruit.radius, Math.min(this.config.height - fruit.radius, fruit.y));
+        // 多次迭代约束，确保所有水果都在边界内且不重叠
+        for (let iter = 0; iter < 3; iter++) {
+            // 边界约束
+            for (const fruit of this.fruits) {
+                fruit.x = Math.max(fruit.radius, Math.min(this.config.width - fruit.radius, fruit.x));
+                fruit.y = Math.max(fruit.radius, Math.min(this.config.height - fruit.radius, fruit.y));
+            }
+
+            // 重叠检测和分离
+            for (let i = 0; i < this.fruits.length; i++) {
+                for (let j = i + 1; j < this.fruits.length; j++) {
+                    const f1 = this.fruits[i];
+                    const f2 = this.fruits[j];
+
+                    const dx = f2.x - f1.x;
+                    const dy = f2.y - f1.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = f1.radius + f2.radius;
+
+                    if (distance < minDistance && distance > 0) {
+                        // 计算分离向量
+                        const overlap = minDistance - distance;
+                        const separationX = (dx / distance) * overlap * 0.5;
+                        const separationY = (dy / distance) * overlap * 0.5;
+
+                        // 分离水果
+                        f1.x -= separationX;
+                        f1.y -= separationY;
+                        f2.x += separationX;
+                        f2.y += separationY;
+
+                        // 确保分离后仍在边界内
+                        f1.x = Math.max(f1.radius, Math.min(this.config.width - f1.radius, f1.x));
+                        f1.y = Math.max(f1.radius, Math.min(this.config.height - f1.radius, f1.y));
+                        f2.x = Math.max(f2.radius, Math.min(this.config.width - f2.radius, f2.x));
+                        f2.y = Math.max(f2.radius, Math.min(this.config.height - f2.radius, f2.y));
+                    }
+                }
+            }
         }
 
         // 碰撞检测和合成
@@ -408,8 +440,7 @@ class WatermelonGame {
             this.ctx.setLineDash([]);
         }
 
-        // 绘制下一个水果预览
-        this.renderNextFruit();
+
     }
 
     drawFruit(fruit) {
@@ -424,26 +455,7 @@ class WatermelonGame {
         this.ctx.restore();
     }
 
-    renderNextFruit() {
-        this.nextCtx.clearRect(0, 0, 60, 60);
 
-        if (this.nextFruitType !== undefined) {
-            const type = this.fruitTypes[this.nextFruitType];
-            const centerX = 30;
-            const centerY = 30;
-            const scale = 0.8;
-
-            this.nextCtx.save();
-
-            // 直接绘制水果emoji（无阴影）
-            this.nextCtx.font = `${type.radius * scale * 2}px Arial`;
-            this.nextCtx.textAlign = 'center';
-            this.nextCtx.textBaseline = 'middle';
-            this.nextCtx.fillText(type.emoji, centerX, centerY + type.radius * scale * 0.1);
-
-            this.nextCtx.restore();
-        }
-    }
 
     updateUI() {
         document.getElementById('score').textContent = this.score;
