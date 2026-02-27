@@ -22,7 +22,7 @@ class WatermelonGame {
             fruitRadius: 20,
             dropInterval: 800,
             maxFruits: 50,
-            dangerLine: 80, // 危险线位置
+            dangerLine: 30, // 危险线位置（靠近顶部，给下落留出空间）
             velocityThreshold: 0.3, // 速度阈值，低于此值停止
             collisionIterations: 3, // 碰撞检测迭代次数
             gridCellSize: 100 // 空间分区网格大小
