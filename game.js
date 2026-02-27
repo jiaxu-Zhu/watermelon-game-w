@@ -6,10 +6,17 @@ class WatermelonGame {
         this.nextCanvas = document.getElementById('nextCanvas');
         this.nextCtx = this.nextCanvas.getContext('2d');
 
+        // 计算合适的画布尺寸（基于屏幕宽度）
+        const screenWidth = window.innerWidth || document.documentElement.clientWidth;
+        const maxWidth = Math.min(screenWidth - 40, 400); // 留出边距，最大400
+        const aspectRatio = 2/3; // 宽高比
+        const canvasWidth = maxWidth;
+        const canvasHeight = canvasWidth / aspectRatio;
+
         // 游戏配置
         this.config = {
-            width: 400,
-            height: 600,
+            width: canvasWidth,
+            height: canvasHeight,
             gravity: 0.3,
             friction: 0.98,
             bounce: 0.4,
@@ -17,21 +24,22 @@ class WatermelonGame {
             fruitRadius: 20,
             dropInterval: 800,
             maxFruits: 50,
-            dangerLine: 100
+            dangerLine: canvasHeight * 0.15 // 危险线在顶部15%位置
         };
 
-        // 水果类型定义（从最小到最大）
+        // 水果类型定义（从最小到最大）- 基于画布宽度动态调整
+        const baseRadius = this.config.width / 400 * 15; // 基于400px宽度的基准
         this.fruitTypes = [
-            { name: '葡萄', radius: 15, color: '#9C27B0', score: 1 },
-            { name: '樱桃', radius: 20, color: '#E91E63', score: 2 },
-            { name: '橘子', radius: 25, color: '#FF9800', score: 4 },
-            { name: '柠檬', radius: 30, color: '#FFEB3B', score: 8 },
-            { name: '猕猴桃', radius: 35, color: '#8BC34A', score: 16 },
-            { name: '番茄', radius: 40, color: '#F44336', score: 32 },
-            { name: '桃子', radius: 45, color: '#FFCCBC', score: 64 },
-            { name: '菠萝', radius: 50, color: '#FFC107', score: 128 },
-            { name: '椰子', radius: 55, color: '#795548', score: 256 },
-            { name: '西瓜', radius: 60, color: '#4CAF50', score: 512 }
+            { name: '葡萄', radius: baseRadius * 1.0, color: '#9C27B0', score: 1 },
+            { name: '樱桃', radius: baseRadius * 1.33, color: '#E91E63', score: 2 },
+            { name: '橘子', radius: baseRadius * 1.67, color: '#FF9800', score: 4 },
+            { name: '柠檬', radius: baseRadius * 2.0, color: '#FFEB3B', score: 8 },
+            { name: '猕猴桃', radius: baseRadius * 2.33, color: '#8BC34A', score: 16 },
+            { name: '番茄', radius: baseRadius * 2.67, color: '#F44336', score: 32 },
+            { name: '桃子', radius: baseRadius * 3.0, color: '#FFCCBC', score: 64 },
+            { name: '菠萝', radius: baseRadius * 3.33, color: '#FFC107', score: 128 },
+            { name: '椰子', radius: baseRadius * 3.67, color: '#795548', score: 256 },
+            { name: '西瓜', radius: baseRadius * 4.0, color: '#4CAF50', score: 512 }
         ];
 
         this.fruits = [];
@@ -57,8 +65,8 @@ class WatermelonGame {
     setupCanvas() {
         this.canvas.width = this.config.width;
         this.canvas.height = this.config.height;
-        this.nextCanvas.width = 80;
-        this.nextCanvas.height = 80;
+        this.nextCanvas.width = 60;
+        this.nextCanvas.height = 60;
     }
 
     setupEventListeners() {
@@ -423,30 +431,31 @@ class WatermelonGame {
     }
 
     renderNextFruit() {
-        this.nextCtx.clearRect(0, 0, 80, 80);
+        this.nextCtx.clearRect(0, 0, 60, 60);
 
         if (this.nextFruitType !== undefined) {
             const type = this.fruitTypes[this.nextFruitType];
-            const centerX = 40;
-            const centerY = 40;
+            const centerX = 30;
+            const centerY = 30;
+            const scale = 0.8;
 
             this.nextCtx.save();
 
             // 绘制阴影
             this.nextCtx.beginPath();
-            this.nextCtx.arc(centerX + 2, centerY + 2, type.radius * 0.8, 0, Math.PI * 2);
+            this.nextCtx.arc(centerX + 2, centerY + 2, type.radius * scale, 0, Math.PI * 2);
             this.nextCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
             this.nextCtx.fill();
 
             // 绘制水果
             this.nextCtx.beginPath();
-            this.nextCtx.arc(centerX, centerY, type.radius * 0.8, 0, Math.PI * 2);
+            this.nextCtx.arc(centerX, centerY, type.radius * scale, 0, Math.PI * 2);
             this.nextCtx.fillStyle = type.color;
             this.nextCtx.fill();
 
             // 绘制高光
             this.nextCtx.beginPath();
-            this.nextCtx.arc(centerX - type.radius * 0.2, centerY - type.radius * 0.2, type.radius * 0.2, 0, Math.PI * 2);
+            this.nextCtx.arc(centerX - type.radius * scale * 0.3, centerY - type.radius * scale * 0.3, type.radius * scale * 0.3, 0, Math.PI * 2);
             this.nextCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
             this.nextCtx.fill();
 
