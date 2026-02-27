@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合成大西瓜 - Watermelon Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>合成大西瓜</h1>
+            <div class="score-board">
+                <div class="score">分数: <span id="score">0</span></div>
+                <div class="best-score">最高分: <span id="best-score">0</span></div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+            <div class="next-fruit">
+                <div class="next-label">下一个</div>
+                <canvas id="nextCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="btn">开始游戏</button>
+            <button id="pauseBtn" class="btn" disabled>暂停</button>
+            <button id="restartBtn" class="btn" disabled>重新开始</button>
+        </div>
+
+        <div class="instructions">
+            <p>🎮 操作说明：</p>
+            <p>• 点击屏幕左右两侧移动水果</p>
+            <p>• 相同水果碰撞会合成更大的水果</p>
+            <p>• 水果堆积超过顶部线游戏结束</p>
+            <p>• 目标是合成大西瓜！</p>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
