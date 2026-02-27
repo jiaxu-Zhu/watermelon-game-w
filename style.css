@@ -32,8 +32,13 @@ body {
 
 /* 头部样式 */
 .game-header {
+    position: relative; /* 为绝对定位的按钮提供参考 */
     text-align: center;
     margin-bottom: 15px;
+}
+
+.game-header {
+    position: relative; /* 为绝对定位的按钮提供参考 */
 }
 
 .game-header h1 {
@@ -49,8 +54,9 @@ body {
 /* 头部操作区 */
 .header-actions {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
 }
 
 .btn-icon {
