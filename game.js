@@ -138,7 +138,7 @@ class WatermelonGame {
         const type = this.fruitTypes[this.nextFruitType];
         this.currentFruit = {
             x: this.dropPosition,
-            y: 50,
+            y: this.config.dangerLine + type.radius + 20, // 确保在危险线下方
             radius: type.radius,
             color: type.color,
             typeIndex: this.nextFruitType,
