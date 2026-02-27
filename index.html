@@ -28,6 +28,7 @@
             <button id="startBtn" class="btn">开始游戏</button>
             <button id="pauseBtn" class="btn" disabled>暂停</button>
             <button id="restartBtn" class="btn" disabled>重新开始</button>
+            <button id="versionBtn" class="btn version-btn">ℹ️ 版本信息</button>
         </div>
 
         <div class="instructions">
@@ -36,6 +37,21 @@
             <p>• 相同水果碰撞会合成更大的水果</p>
             <p>• 水果堆积超过顶部线游戏结束</p>
             <p>• 目标是合成大西瓜！</p>
+        </div>
+    </div>
+
+    <!-- 版本信息弹窗 -->
+    <div id="versionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>📋 版本信息</h2>
+            <div class="version-info">
+                <p><strong>🎮 游戏名称：</strong>合成大西瓜</p>
+                <p><strong>📦 版本号：</strong><span id="versionNumber">v1.0.0</span></p>
+                <p><strong>📝 版本信息：</strong><span id="versionInfo">初始版本</span></p>
+                <p><strong>🕒 更新时间：</strong><span id="updateTime">2026-02-27 09:30</span></p>
+                <p><strong>👨‍💻 开发者：</strong>nanobot</p>
+            </div>
         </div>
     </div>
 
