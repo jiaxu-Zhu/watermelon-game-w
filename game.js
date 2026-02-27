@@ -15,14 +15,14 @@ class WatermelonGame {
         this.config = {
             width: canvasWidth,
             height: canvasHeight,
-            gravity: 0.5, // 增加重力，让水果下落更快
-            friction: 0.99,
-            bounce: 0.3,
-            wallBounce: 0.5,
+            gravity: 0.8, // 增加重力，让水果下落更快
+            friction: 0.98,
+            bounce: 0.2,
+            wallBounce: 0.4,
             fruitRadius: 20,
             dropInterval: 800,
             maxFruits: 50,
-            dangerLine: 30 // 危险线更靠近顶部，水果从顶部下落
+            dangerLine: 80 // 危险线位置
         };
 
         // 版本信息
@@ -148,7 +148,7 @@ class WatermelonGame {
             typeIndex: this.nextFruitType,
             vx: 0,
             vy: 0,
-            isDropping: false
+            isActive: false // 初始不活跃，点击后才开始下落
         };
 
         // 生成下一个水果
@@ -156,9 +156,9 @@ class WatermelonGame {
     }
 
     dropFruit() {
-        if (this.gameState !== 'playing' || !this.currentFruit || this.currentFruit.isDropping) return;
+        if (this.gameState !== 'playing' || !this.currentFruit || this.currentFruit.isActive) return;
 
-        this.currentFruit.isDropping = true;
+        this.currentFruit.isActive = true;
         this.currentFruit.vy = 2; // 给一个初始向下速度，避免漂浮感
     }
 
@@ -167,21 +167,23 @@ class WatermelonGame {
 
         const now = Date.now();
 
-        // 自动生成新水果（如果当前水果已掉落）
-        if (this.currentFruit && !this.currentFruit.isDropping) {
-            // 更新水果位置跟随鼠标
+        // 当前水果跟随鼠标（如果还未下落）
+        if (this.currentFruit && !this.currentFruit.isActive) {
             this.currentFruit.x = Math.max(
                 this.currentFruit.radius,
                 Math.min(this.config.width - this.currentFruit.radius, this.mouseX)
             );
         }
 
-        // 更新所有水果物理
-        for (let i = 0; i < this.fruits.length; i++) {
-            const fruit = this.fruits[i];
+        // 更新所有水果物理（包括当前水果和已落下的水果）
+        const allFruits = [...this.fruits];
+        if (this.currentFruit && this.currentFruit.isActive) {
+            allFruits.push(this.currentFruit);
+        }
 
-            if (fruit.isDropping) {
-                // 应用重力
+        for (const fruit of allFruits) {
+            // 应用重力（只对活跃水果）
+            if (fruit.isActive) {
                 fruit.vy += this.config.gravity;
                 fruit.vx *= this.config.friction;
                 fruit.vy *= this.config.friction;
@@ -205,9 +207,11 @@ class WatermelonGame {
                     fruit.y = this.config.height - fruit.radius;
                     fruit.vy = -fruit.vy * this.config.bounce;
 
-                    // 如果速度很小，停止弹跳
-                    if (Math.abs(fruit.vy) < 0.5) {
+                    // 如果速度很小，停止弹跳并标记为不活跃
+                    if (Math.abs(fruit.vy) < 0.5 && Math.abs(fruit.vx) < 0.5) {
                         fruit.vy = 0;
+                        fruit.vx = 0;
+                        fruit.isActive = false;
                     }
                 }
             }
@@ -264,13 +268,10 @@ class WatermelonGame {
         }
 
         // 生成新水果（当前水果停止运动后）
-        if (this.currentFruit && this.currentFruit.isDropping) {
-            const current = this.currentFruit;
-            if (Math.abs(current.vy) < 0.1 && Math.abs(current.vx) < 0.1) {
-                this.fruits.push({...current});
-                this.currentFruit = null;
-                this.lastDropTime = now; // 重置时间，用于下一次生成
-            }
+        if (this.currentFruit && !this.currentFruit.isActive) {
+            this.fruits.push({...this.currentFruit});
+            this.currentFruit = null;
+            this.lastDropTime = now; // 重置时间，用于下一次生成
         }
 
         // 如果没有当前水果且超过间隔时间，生成新水果
@@ -281,20 +282,36 @@ class WatermelonGame {
     }
 
     checkCollisions() {
-        for (let i = 0; i < this.fruits.length; i++) {
-            for (let j = i + 1; j < this.fruits.length; j++) {
-                const f1 = this.fruits[i];
-                const f2 = this.fruits[j];
+        // 包括当前水果和已落下的水果
+        const allFruits = [...this.fruits];
+        if (this.currentFruit && this.currentFruit.isActive) {
+            allFruits.push(this.currentFruit);
+        }
 
-                // 只处理静止或缓慢移动的水果
-                if (f1.isDropping || f2.isDropping) {
-                    const dx = f2.x - f1.x;
-                    const dy = f2.y - f1.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const minDistance = f1.radius + f2.radius;
+        for (let i = 0; i < allFruits.length; i++) {
+            for (let j = i + 1; j < allFruits.length; j++) {
+                const f1 = allFruits[i];
+                const f2 = allFruits[j];
 
-                    if (distance < minDistance) {
-                        // 碰撞响应
+                const dx = f2.x - f1.x;
+                const dy = f2.y - f1.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDistance = f1.radius + f2.radius;
+
+                if (distance < minDistance && distance > 0) {
+                    // 分离重叠的水果
+                    const overlap = minDistance - distance;
+                    const separationX = (dx / distance) * overlap * 0.5;
+                    const separationY = (dy / distance) * overlap * 0.5;
+
+                    f1.x -= separationX;
+                    f1.y -= separationY;
+                    f2.x += separationX;
+                    f2.y += separationY;
+
+                    // 如果至少有一个水果在运动，应用碰撞响应
+                    if (f1.isActive || f2.isActive || Math.abs(f1.vx) > 0.1 || Math.abs(f1.vy) > 0.1 ||
+                        Math.abs(f2.vx) > 0.1 || Math.abs(f2.vy) > 0.1) {
                         const angle = Math.atan2(dy, dx);
                         const sin = Math.sin(angle);
                         const cos = Math.cos(angle);
@@ -318,20 +335,30 @@ class WatermelonGame {
                         f2.vx = newVx2 * cos - vy2 * sin;
                         f2.vy = vy2 * cos + newVx2 * sin;
 
-                        // 分离重叠的水果
-                        const overlap = minDistance - distance;
-                        const separationX = overlap * cos * 0.5;
-                        const separationY = overlap * sin * 0.5;
-                        f1.x -= separationX;
-                        f1.y -= separationY;
-                        f2.x += separationX;
-                        f2.y += separationY;
+                        // 确保分离后仍在边界内
+                        f1.x = Math.max(f1.radius, Math.min(this.config.width - f1.radius, f1.x));
+                        f1.y = Math.max(f1.radius, Math.min(this.config.height - f1.radius, f1.y));
+                        f2.x = Math.max(f2.radius, Math.min(this.config.width - f2.radius, f2.x));
+                        f2.y = Math.max(f2.radius, Math.min(this.config.height - f2.radius, f2.y));
+                    }
 
-                        // 检查是否相同类型且可以合成
-                        if (f1.typeIndex === f2.typeIndex && f1.typeIndex < this.fruitTypes.length - 1) {
-                            this.mergeFruits(i, j);
-                            return; // 避免在同一帧多次合并
+                    // 检查是否相同类型且可以合成
+                    if (f1.typeIndex === f2.typeIndex && f1.typeIndex < this.fruitTypes.length - 1) {
+                        // 注意：需要处理当前水果和已落下的水果合并的情况
+                        if (f1 === this.currentFruit && f1.isActive) {
+                            // 当前水果与已落下的水果合并
+                            this.mergeCurrentWithFruit(f1, f2);
+                        } else if (f2 === this.currentFruit && f2.isActive) {
+                            this.mergeCurrentWithFruit(f2, f1);
+                        } else {
+                            // 两个已落下的水果合并
+                            const index1 = this.fruits.indexOf(f1);
+                            const index2 = this.fruits.indexOf(f2);
+                            if (index1 !== -1 && index2 !== -1) {
+                                this.mergeFruits(index1, index2);
+                            }
                         }
+                        return; // 避免在同一帧多次合并
                     }
                 }
             }
@@ -348,9 +375,14 @@ class WatermelonGame {
         const newX = (f1.x + f2.x) / 2;
         const newY = (f1.y + f2.y) / 2;
 
-        // 移除旧水果
-        this.fruits.splice(index2, 1);
-        this.fruits.splice(index1, 1);
+        // 移除旧水果（注意：先移除索引大的，避免索引变化）
+        if (index1 < index2) {
+            this.fruits.splice(index2, 1);
+            this.fruits.splice(index1, 1);
+        } else {
+            this.fruits.splice(index1, 1);
+            this.fruits.splice(index2, 1);
+        }
 
         // 添加新水果（确保在画布内）
         const newFruit = {
@@ -361,7 +393,7 @@ class WatermelonGame {
             typeIndex: newTypeIndex,
             vx: 0,
             vy: 0,
-            isDropping: false
+            isActive: false
         };
         this.fruits.push(newFruit);
 
@@ -369,7 +401,45 @@ class WatermelonGame {
         this.score += newType.score;
         this.updateUI();
 
-        // 播放合成效果（可以添加动画）
+        // 播放合成效果
+        this.playMergeEffect(newX, newY, newType.emoji);
+    }
+
+    mergeCurrentWithFruit(currentFruit, existingFruit) {
+        const newTypeIndex = currentFruit.typeIndex + 1;
+        const newType = this.fruitTypes[newTypeIndex];
+
+        // 计算新位置（中点）
+        const newX = (currentFruit.x + existingFruit.x) / 2;
+        const newY = (currentFruit.y + existingFruit.y) / 2;
+
+        // 移除已存在的旧水果
+        const existingIndex = this.fruits.indexOf(existingFruit);
+        if (existingIndex !== -1) {
+            this.fruits.splice(existingIndex, 1);
+        }
+
+        // 清除当前水果
+        this.currentFruit = null;
+
+        // 生成新水果并立即加入已落下的水果数组
+        const newFruit = {
+            x: Math.max(newType.radius, Math.min(this.config.width - newType.radius, newX)),
+            y: Math.max(newType.radius, Math.min(this.config.height - newType.radius, newY)),
+            radius: newType.radius,
+            emoji: newType.emoji,
+            typeIndex: newTypeIndex,
+            vx: 0,
+            vy: 0,
+            isActive: false
+        };
+        this.fruits.push(newFruit);
+
+        // 增加分数
+        this.score += newType.score;
+        this.updateUI();
+
+        // 播放合成效果
         this.playMergeEffect(newX, newY, newType.emoji);
     }
 
