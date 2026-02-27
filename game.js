@@ -53,13 +53,12 @@ class WatermelonGame {
     setupCanvas() {
         // 计算可用高度（减去其他UI元素的高度）
         const headerHeight = 80; // 标题+分数板
-        const previewHeight = 80; // 下一个水果预览
         const controlsHeight = 60; // 按钮
-        const instructionsHeight = 120; // 游戏说明
-        const padding = 60; // 容器padding和其他间距
+        const instructionsHeight = 80; // 游戏说明（现在更紧凑）
+        const padding = 50; // 容器padding和其他间距
         const modalSpace = 100; // 模态框预留空间
 
-        const availableHeight = window.innerHeight - headerHeight - previewHeight - controlsHeight - instructionsHeight - padding - modalSpace;
+        const availableHeight = window.innerHeight - headerHeight - controlsHeight - instructionsHeight - padding - modalSpace;
         const maxWidth = Math.min(window.innerWidth - 40, 400);
         const aspectRatio = 2 / 3; // 宽高比 2:3
 
@@ -95,6 +94,12 @@ class WatermelonGame {
         document.getElementById('startBtn').addEventListener('click', () => this.startGame());
         document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
         document.getElementById('restartBtn').addEventListener('click', () => this.restartGame());
+        document.getElementById('rulesBtn').addEventListener('click', () => {
+            document.getElementById('rulesModal').classList.remove('hidden');
+        });
+        document.getElementById('closeRulesBtn').addEventListener('click', () => {
+            document.getElementById('rulesModal').classList.add('hidden');
+        });
         document.getElementById('modalRestartBtn').addEventListener('click', () => {
             document.getElementById('gameOverModal').classList.add('hidden');
             this.restartGame();
@@ -117,7 +122,6 @@ class WatermelonGame {
         });
 
         // 初始化显示
-        this.updateNextFruitPreview();
         this.updateScoreDisplay();
         this.draw();
     }
@@ -181,7 +185,6 @@ class WatermelonGame {
 
         // 生成下一个水果（前3种小水果）
         this.nextFruitType = Math.floor(Math.random() * 3);
-        this.updateNextFruitPreview();
     }
 
     getFruitType(typeIndex) {
@@ -192,13 +195,6 @@ class WatermelonGame {
             color: base.color,
             score: base.score
         };
-    }
-
-    updateNextFruitPreview() {
-        const preview = document.getElementById('nextFruit');
-        const type = this.getFruitType(this.nextFruitType);
-        preview.textContent = type.emoji;
-        preview.style.fontSize = Math.min(type.radius * 1.5, 40) + 'px'; // 限制最大字体
     }
 
     dropFruit() {
