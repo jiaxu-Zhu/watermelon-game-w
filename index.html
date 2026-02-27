@@ -2,52 +2,57 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>合成大西瓜 - Watermelon Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
-        <div class="header">
-            <h1>合成大西瓜</h1>
+        <header class="game-header">
+            <h1>🍉 合成大西瓜</h1>
             <div class="score-board">
-                <div class="score">分数: <span id="score">0</span></div>
-                <div class="best-score">最高分: <span id="best-score">0</span></div>
+                <div class="score-item">
+                    <span class="label">得分</span>
+                    <span id="score" class="value">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">最高分</span>
+                    <span id="bestScore" class="value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-area">
+            <div class="next-fruit-preview">
+                <div class="preview-label">下一个</div>
+                <div id="nextFruit" class="next-fruit"></div>
+            </div>
+
+            <canvas id="gameCanvas"></canvas>
+
+            <div class="game-controls">
+                <button id="startBtn" class="btn btn-primary">开始游戏</button>
+                <button id="pauseBtn" class="btn btn-secondary" disabled>暂停</button>
+                <button id="restartBtn" class="btn btn-secondary" disabled>重新开始</button>
             </div>
         </div>
 
-        <div class="game-area">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-
-        <div class="controls">
-            <button id="startBtn" class="btn">开始游戏</button>
-            <button id="pauseBtn" class="btn" disabled>暂停</button>
-            <button id="restartBtn" class="btn" disabled>重新开始</button>
-            <button id="versionBtn" class="btn version-btn">ℹ️ 版本信息</button>
-        </div>
-
-        <div class="instructions">
-            <p>🎮 操作说明：</p>
-            <p>• 点击屏幕左右两侧移动水果</p>
-            <p>• 相同水果碰撞会合成更大的水果</p>
-            <p>• 水果堆积超过顶部线游戏结束</p>
-            <p>• 目标是合成大西瓜！</p>
+        <div class="game-instructions">
+            <h3>游戏规则</h3>
+            <ul>
+                <li>点击屏幕或按空格键掉落水果</li>
+                <li>相同水果碰撞会合成更大的水果</li>
+                <li>水果超过危险线游戏结束</li>
+                <li>合成大西瓜获得最高分！</li>
+            </ul>
         </div>
     </div>
 
-    <!-- 版本信息弹窗 -->
-    <div id="versionModal" class="modal">
+    <div id="gameOverModal" class="modal hidden">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>📋 版本信息</h2>
-            <div class="version-info">
-                <p><strong>🎮 游戏名称：</strong>合成大西瓜</p>
-                <p><strong>📦 版本号：</strong><span id="versionNumber">v1.0.0</span></p>
-                <p><strong>📝 版本信息：</strong><span id="versionInfo">初始版本</span></p>
-                <p><strong>🕒 更新时间：</strong><span id="updateTime">2026-02-27 09:30</span></p>
-                <p><strong>👨‍💻 开发者：</strong>nanobot</p>
-            </div>
+            <h2>游戏结束</h2>
+            <p>你的得分：<span id="finalScore">0</span></p>
+            <button id="modalRestartBtn" class="btn btn-primary">再玩一次</button>
         </div>
     </div>
 
