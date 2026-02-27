@@ -84,6 +84,8 @@ class WatermelonGame {
     init() {
         // 事件监听
         this.canvas.addEventListener('click', () => this.dropFruit());
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.dropFruit();
@@ -196,6 +198,30 @@ class WatermelonGame {
 
         // 生成下一个水果（前3种小水果）
         this.nextFruitType = Math.floor(Math.random() * 3);
+    }
+
+    handleMouseMove(e) {
+        if (this.gameState !== 'playing' || !this.currentFruit) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const type = this.getFruitType(this.currentFruit.typeIndex);
+        this.config.dropPosition = Math.max(type.radius, Math.min(this.canvas.width - type.radius, x));
+        this.currentFruit.x = this.config.dropPosition;
+        this.draw();
+    }
+
+    handleTouchMove(e) {
+        if (this.gameState !== 'playing' || !this.currentFruit) return;
+        e.preventDefault();
+
+        const rect = this.canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const type = this.getFruitType(this.currentFruit.typeIndex);
+        this.config.dropPosition = Math.max(type.radius, Math.min(this.canvas.width - type.radius, x));
+        this.currentFruit.x = this.config.dropPosition;
+        this.draw();
     }
 
     getFruitType(typeIndex) {
