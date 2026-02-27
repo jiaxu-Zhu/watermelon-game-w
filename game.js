@@ -12,18 +12,18 @@ class WatermelonGame {
         this.score = 0;
         this.bestScore = localStorage.getItem('watermelonBestScore') || 0;
 
-        // 水果定义（10个等级）
-        this.fruitTypes = [
-            { emoji: '🍇', radius: 15, color: '#9b59b6', score: 1 },
-            { emoji: '🍒', radius: 20, color: '#e74c3c', score: 2 },
-            { emoji: '🍊', radius: 25, color: '#f39c12', score: 4 },
-            { emoji: '🍋', radius: 30, color: '#f1c40f', score: 8 },
-            { emoji: '🥝', radius: 35, color: '#2ecc71', score: 16 },
-            { emoji: '🍅', radius: 40, color: '#e67e22', score: 32 },
-            { emoji: '🍑', radius: 45, color: '#ff9ff3', score: 64 },
-            { emoji: '🍍', radius: 50, color: '#fdcb6e', score: 128 },
-            { emoji: '🥥', radius: 55, color: '#dfe6e9', score: 256 },
-            { emoji: '🍉', radius: 60, color: '#27ae60', score: 512 }
+        // 水果定义（10个等级）- 半径将根据画布宽度动态计算
+        this.baseFruitTypes = [
+            { emoji: '🍇', scale: 0.04, color: '#9b59b6', score: 1 },
+            { emoji: '🍒', scale: 0.05, color: '#e74c3c', score: 2 },
+            { emoji: '🍊', scale: 0.06, color: '#f39c12', score: 4 },
+            { emoji: '🍋', scale: 0.07, color: '#f1c40f', score: 8 },
+            { emoji: '🥝', scale: 0.08, color: '#2ecc71', score: 16 },
+            { emoji: '🍅', scale: 0.09, color: '#e67e22', score: 32 },
+            { emoji: '🍑', scale: 0.10, color: '#ff9ff3', score: 64 },
+            { emoji: '🍍', scale: 0.11, color: '#fdcb6e', score: 128 },
+            { emoji: '🥥', scale: 0.12, color: '#dfe6e9', score: 256 },
+            { emoji: '🍉', scale: 0.13, color: '#27ae60', score: 512 }
         ];
 
         // 物理配置
@@ -51,12 +51,30 @@ class WatermelonGame {
     }
 
     setupCanvas() {
-        const containerWidth = Math.min(window.innerWidth - 40, 400);
-        const aspectRatio = 2 / 3;
-        this.canvas.width = containerWidth;
-        this.canvas.height = containerWidth / aspectRatio;
-        this.canvas.style.width = containerWidth + 'px';
-        this.canvas.style.height = (containerWidth / aspectRatio) + 'px';
+        // 计算可用高度（减去其他UI元素的高度）
+        const headerHeight = 80; // 标题+分数板
+        const previewHeight = 80; // 下一个水果预览
+        const controlsHeight = 60; // 按钮
+        const instructionsHeight = 120; // 游戏说明
+        const padding = 60; // 容器padding和其他间距
+        const modalSpace = 100; // 模态框预留空间
+
+        const availableHeight = window.innerHeight - headerHeight - previewHeight - controlsHeight - instructionsHeight - padding - modalSpace;
+        const maxWidth = Math.min(window.innerWidth - 40, 400);
+        const aspectRatio = 2 / 3; // 宽高比 2:3
+
+        // 根据可用高度计算最大宽度
+        const maxCanvasHeight = availableHeight;
+        const maxCanvasWidth = maxCanvasHeight * aspectRatio;
+
+        // 取较小值作为画布宽度
+        const canvasWidth = Math.min(maxWidth, maxCanvasWidth);
+        const canvasHeight = canvasWidth / aspectRatio;
+
+        this.canvas.width = canvasWidth;
+        this.canvas.height = canvasHeight;
+        this.canvas.style.width = canvasWidth + 'px';
+        this.canvas.style.height = canvasHeight + 'px';
     }
 
     init() {
@@ -86,6 +104,16 @@ class WatermelonGame {
         window.addEventListener('resize', () => {
             this.setupCanvas();
             this.config.dropPosition = this.canvas.width / 2;
+            // 重新调整所有水果大小
+            this.fruits.forEach(fruit => {
+                const newType = this.getFruitType(fruit.typeIndex);
+                fruit.radius = newType.radius;
+            });
+            // 调整当前水果大小
+            if (this.currentFruit) {
+                const newType = this.getFruitType(this.currentFruit.typeIndex);
+                this.currentFruit.radius = newType.radius;
+            }
         });
 
         // 初始化显示
@@ -140,7 +168,7 @@ class WatermelonGame {
     }
 
     spawnCurrentFruit() {
-        const type = this.fruitTypes[this.nextFruitType];
+        const type = this.getFruitType(this.nextFruitType);
         this.currentFruit = {
             x: Math.max(type.radius, Math.min(this.canvas.width - type.radius, this.config.dropPosition)),
             y: type.radius + 10,
@@ -156,11 +184,21 @@ class WatermelonGame {
         this.updateNextFruitPreview();
     }
 
+    getFruitType(typeIndex) {
+        const base = this.baseFruitTypes[typeIndex];
+        return {
+            emoji: base.emoji,
+            radius: this.canvas.width * base.scale,
+            color: base.color,
+            score: base.score
+        };
+    }
+
     updateNextFruitPreview() {
         const preview = document.getElementById('nextFruit');
-        const type = this.fruitTypes[this.nextFruitType];
+        const type = this.getFruitType(this.nextFruitType);
         preview.textContent = type.emoji;
-        preview.style.fontSize = (type.radius * 1.5) + 'px';
+        preview.style.fontSize = Math.min(type.radius * 1.5, 40) + 'px'; // 限制最大字体
     }
 
     dropFruit() {
@@ -296,7 +334,7 @@ class WatermelonGame {
 
     mergeFruits(fruit1, fruit2, index1, index2) {
         const newTypeIndex = fruit1.typeIndex + 1;
-        const newType = this.fruitTypes[newTypeIndex];
+        const newType = this.getFruitType(newTypeIndex);
 
         // 计算新位置（中点）
         const newX = (fruit1.x + fruit2.x) / 2;
@@ -326,7 +364,7 @@ class WatermelonGame {
     }
 
     createMergeParticles(x, y, radius, typeIndex) {
-        const type = this.fruitTypes[typeIndex];
+        const baseType = this.baseFruitTypes[typeIndex];
         const particleCount = 8;
 
         for (let i = 0; i < particleCount; i++) {
@@ -339,7 +377,7 @@ class WatermelonGame {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 radius: radius * 0.3,
-                color: type.color,
+                color: baseType.color,
                 life: 1.0,
                 decay: 0.02 + Math.random() * 0.02
             });
@@ -439,7 +477,7 @@ class WatermelonGame {
     }
 
     drawFruit(fruit) {
-        const type = this.fruitTypes[fruit.typeIndex];
+        const baseType = this.baseFruitTypes[fruit.typeIndex];
 
         // 阴影
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
@@ -448,7 +486,7 @@ class WatermelonGame {
         this.ctx.shadowOffsetY = 2;
 
         // 背景圆
-        this.ctx.fillStyle = type.color;
+        this.ctx.fillStyle = baseType.color;
         this.ctx.beginPath();
         this.ctx.arc(fruit.x, fruit.y, fruit.radius, 0, Math.PI * 2);
         this.ctx.fill();
@@ -463,7 +501,7 @@ class WatermelonGame {
         this.ctx.font = fruit.radius * 1.5 + 'px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(type.emoji, fruit.x, fruit.y);
+        this.ctx.fillText(baseType.emoji, fruit.x, fruit.y);
     }
 
     gameLoop() {
