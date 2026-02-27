@@ -140,40 +140,7 @@ body {
 }
 
 /* 游戏说明 */
-.game-instructions {
-    margin-top: 15px;
-    padding: 15px;
-    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.game-instructions h3 {
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 1rem;
-    color: #333;
-}
-
-.game-instructions ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.game-instructions li {
-    padding: 6px 0;
-    padding-left: 20px;
-    position: relative;
-    color: #555;
-    font-size: 0.85rem;
-}
-
-.game-instructions li::before {
-    content: "🍓";
-    position: absolute;
-    left: 0;
-    font-size: 0.9rem;
-}
+/* 已移除，规则改为按钮弹窗 */
 
 /* 模态框 */
 .modal {
@@ -268,22 +235,6 @@ body {
     .btn {
         padding: 6px 12px;
         font-size: 0.75rem;
-    }
-
-    .game-instructions {
-        padding: 10px;
-        margin-top: 8px;
-    }
-
-    .game-instructions h3 {
-        font-size: 0.85rem;
-        margin-bottom: 6px;
-    }
-
-    .game-instructions li {
-        font-size: 0.75rem;
-        padding: 4px 0;
-        padding-left: 16px;
     }
 
     .modal-content {
