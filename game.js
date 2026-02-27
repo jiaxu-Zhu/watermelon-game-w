@@ -356,21 +356,21 @@ class WatermelonGame {
                     }
                 }
 
-                // 检查是否相同等级且速度都很小（放宽条件，允许合并）
-                // 不要求 isActive 状态，只要求速度足够小
-                const bothSlow = Math.abs(activeFruit.vx) < 0.4 && Math.abs(activeFruit.vy) < 0.4 &&
-                                 Math.abs(other.vx) < 0.4 && Math.abs(other.vy) < 0.4;
+                // 检查是否相同等级且相对速度很小（稳定接触）
+                // 使用相对速度判断，避免高速碰撞时误合并
+                const relVx = activeFruit.vx - other.vx;
+                const relVy = activeFruit.vy - other.vy;
+                const relSpeed = Math.sqrt(relVx * relVx + relVy * relVy);
 
-                if (bothSlow &&
+                // 合并条件：相同等级 + 相对速度小 + 重叠（已满足）
+                if (relSpeed < 0.3 &&
                     activeFruit.typeIndex === other.typeIndex &&
                     activeFruit.typeIndex < this.baseFruitTypes.length - 1) {
 
                     // 延迟合并：记录待合并项，不立即修改数组
                     this.pendingMerges.push({
                         fruit1: activeFruit,
-                        fruit2: other,
-                        index1: activeIndex,
-                        index2: i
+                        fruit2: other
                     });
                 }
             }
@@ -411,32 +411,40 @@ class WatermelonGame {
     processPendingMerges() {
         if (this.pendingMerges.length === 0) return;
 
-        // 去重：确保每个水果只被合并一次
-        const mergedIndices = new Set();
+        // 去重：使用水果对象引用，确保每个水果只被合并一次
+        const mergedFruits = new Set();
         const validMerges = [];
 
         for (const merge of this.pendingMerges) {
-            if (!mergedIndices.has(merge.index1) && !mergedIndices.has(merge.index2)) {
+            if (!mergedFruits.has(merge.fruit1) && !mergedFruits.has(merge.fruit2)) {
                 validMerges.push(merge);
-                mergedIndices.add(merge.index1);
-                mergedIndices.add(merge.index2);
+                mergedFruits.add(merge.fruit1);
+                mergedFruits.add(merge.fruit2);
             }
         }
 
         // 清空待合并列表
         this.pendingMerges = [];
 
-        // 按索引降序排序，确保删除时不影响后续索引
-        validMerges.sort((a, b) => b.index2 - a.index2);
-
-        // 执行合并
+        // 执行合并（不依赖索引，而是查找水果位置）
         for (const merge of validMerges) {
-            const result = this.mergeFruits(merge.fruit1, merge.fruit2, merge.index1, merge.index2);
-            // 删除旧水果
-            this.fruits.splice(result.index2, 1);
-            this.fruits.splice(result.index1, 1);
-            // 添加新水果
-            this.fruits.push(result.newFruit);
+            const idx1 = this.fruits.indexOf(merge.fruit1);
+            const idx2 = this.fruits.indexOf(merge.fruit2);
+
+            // 确保两个水果都还在数组中
+            if (idx1 !== -1 && idx2 !== -1) {
+                const result = this.mergeFruits(merge.fruit1, merge.fruit2, idx1, idx2);
+
+                // 按索引降序删除
+                const first = Math.min(result.index1, result.index2);
+                const second = Math.max(result.index1, result.index2);
+
+                this.fruits.splice(second, 1);
+                this.fruits.splice(first, 1);
+
+                // 添加新水果
+                this.fruits.push(result.newFruit);
+            }
         }
     }
 
