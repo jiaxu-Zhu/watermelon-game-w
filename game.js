@@ -217,15 +217,14 @@ class WatermelonGame {
             }
         }
 
-        // 多次迭代约束，确保所有水果都在边界内且不重叠
-        for (let iter = 0; iter < 3; iter++) {
-            // 边界约束
-            for (const fruit of this.fruits) {
-                fruit.x = Math.max(fruit.radius, Math.min(this.config.width - fruit.radius, fruit.x));
-                fruit.y = Math.max(fruit.radius, Math.min(this.config.height - fruit.radius, fruit.y));
-            }
+        // 边界约束 - 对所有水果（包括静止的）
+        for (const fruit of this.fruits) {
+            fruit.x = Math.max(fruit.radius, Math.min(this.config.width - fruit.radius, fruit.x));
+            fruit.y = Math.max(fruit.radius, Math.min(this.config.height - fruit.radius, fruit.y));
+        }
 
-            // 重叠检测和分离
+        // 重叠检测和分离 - 多次迭代确保稳定
+        for (let iter = 0; iter < 3; iter++) {
             for (let i = 0; i < this.fruits.length; i++) {
                 for (let j = i + 1; j < this.fruits.length; j++) {
                     const f1 = this.fruits[i];
@@ -233,11 +232,12 @@ class WatermelonGame {
 
                     const dx = f2.x - f1.x;
                     const dy = f2.y - f1.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const distanceSq = dx * dx + dy * dy;
                     const minDistance = f1.radius + f2.radius;
+                    const minDistanceSq = minDistance * minDistance;
 
-                    if (distance < minDistance && distance > 0) {
-                        // 计算分离向量
+                    if (distanceSq < minDistanceSq && distanceSq > 0) {
+                        const distance = Math.sqrt(distanceSq);
                         const overlap = minDistance - distance;
                         const separationX = (dx / distance) * overlap * 0.5;
                         const separationY = (dy / distance) * overlap * 0.5;
@@ -295,11 +295,33 @@ class WatermelonGame {
 
                 const dx = f2.x - f1.x;
                 const dy = f2.y - f1.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                const distanceSq = dx * dx + dy * dy;
                 const minDistance = f1.radius + f2.radius;
+                const minDistanceSq = minDistance * minDistance;
 
-                if (distance < minDistance && distance > 0) {
-                    // 分离重叠的水果
+                if (distanceSq < minDistanceSq && distanceSq > 0) {
+                    const distance = Math.sqrt(distanceSq);
+
+                    // 首先检查是否相同类型且可以合并（合并优先级高于物理碰撞）
+                    if (f1.typeIndex === f2.typeIndex && f1.typeIndex < this.fruitTypes.length - 1) {
+                        // 注意：需要处理当前水果和已落下的水果合并的情况
+                        if (f1 === this.currentFruit && f1.isActive) {
+                            // 当前水果与已落下的水果合并
+                            this.mergeCurrentWithFruit(f1, f2);
+                        } else if (f2 === this.currentFruit && f2.isActive) {
+                            this.mergeCurrentWithFruit(f2, f1);
+                        } else {
+                            // 两个已落下的水果合并
+                            const index1 = this.fruits.indexOf(f1);
+                            const index2 = this.fruits.indexOf(f2);
+                            if (index1 !== -1 && index2 !== -1) {
+                                this.mergeFruits(index1, index2);
+                            }
+                        }
+                        return; // 避免在同一帧多次合并
+                    }
+
+                    // 不是合并的情况，进行分离和碰撞响应
                     const overlap = minDistance - distance;
                     const separationX = (dx / distance) * overlap * 0.5;
                     const separationY = (dy / distance) * overlap * 0.5;
@@ -340,25 +362,6 @@ class WatermelonGame {
                         f1.y = Math.max(f1.radius, Math.min(this.config.height - f1.radius, f1.y));
                         f2.x = Math.max(f2.radius, Math.min(this.config.width - f2.radius, f2.x));
                         f2.y = Math.max(f2.radius, Math.min(this.config.height - f2.radius, f2.y));
-                    }
-
-                    // 检查是否相同类型且可以合成
-                    if (f1.typeIndex === f2.typeIndex && f1.typeIndex < this.fruitTypes.length - 1) {
-                        // 注意：需要处理当前水果和已落下的水果合并的情况
-                        if (f1 === this.currentFruit && f1.isActive) {
-                            // 当前水果与已落下的水果合并
-                            this.mergeCurrentWithFruit(f1, f2);
-                        } else if (f2 === this.currentFruit && f2.isActive) {
-                            this.mergeCurrentWithFruit(f2, f1);
-                        } else {
-                            // 两个已落下的水果合并
-                            const index1 = this.fruits.indexOf(f1);
-                            const index2 = this.fruits.indexOf(f2);
-                            if (index1 !== -1 && index2 !== -1) {
-                                this.mergeFruits(index1, index2);
-                            }
-                        }
-                        return; // 避免在同一帧多次合并
                     }
                 }
             }
@@ -449,8 +452,10 @@ class WatermelonGame {
     }
 
     checkGameOver() {
+        // 检查所有静止的水果是否超过危险线
         for (const fruit of this.fruits) {
-            if (fruit.y - fruit.radius < this.config.dangerLine) {
+            // 只检查不活跃（已静止）的水果
+            if (!fruit.isActive && fruit.y - fruit.radius < this.config.dangerLine) {
                 return true;
             }
         }
@@ -547,7 +552,10 @@ class WatermelonGame {
         this.update();
         this.render();
 
-        requestAnimationFrame(() => this.gameLoop());
+        // 使用 requestAnimationFrame 但确保在游戏结束时停止
+        if (this.gameState === 'playing') {
+            requestAnimationFrame(() => this.gameLoop());
+        }
     }
 
     showVersionInfo() {
