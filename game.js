@@ -137,7 +137,7 @@ class WatermelonGame {
     spawnCurrentFruit() {
         const type = this.fruitTypes[this.nextFruitType];
         this.currentFruit = {
-            x: this.dropPosition,
+            x: Math.max(type.radius, Math.min(this.config.width - type.radius, this.dropPosition)),
             y: this.config.dangerLine + type.radius + 20, // 确保在危险线下方
             radius: type.radius,
             emoji: type.emoji,
@@ -208,6 +208,10 @@ class WatermelonGame {
                     }
                 }
             }
+
+            // 确保所有水果都在画布内（包括静止的）
+            fruit.x = Math.max(fruit.radius, Math.min(this.config.width - fruit.radius, fruit.x));
+            fruit.y = Math.max(fruit.radius, Math.min(this.config.height - fruit.radius, fruit.y));
         }
 
         // 碰撞检测和合成
@@ -308,17 +312,18 @@ class WatermelonGame {
         this.fruits.splice(index2, 1);
         this.fruits.splice(index1, 1);
 
-        // 添加新水果
-        this.fruits.push({
-            x: newX,
-            y: newY,
+        // 添加新水果（确保在画布内）
+        const newFruit = {
+            x: Math.max(newType.radius, Math.min(this.config.width - newType.radius, newX)),
+            y: Math.max(newType.radius, Math.min(this.config.height - newType.radius, newY)),
             radius: newType.radius,
             emoji: newType.emoji,
             typeIndex: newTypeIndex,
             vx: 0,
             vy: 0,
             isDropping: false
-        });
+        };
+        this.fruits.push(newFruit);
 
         // 增加分数
         this.score += newType.score;
