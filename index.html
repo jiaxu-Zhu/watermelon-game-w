@@ -63,28 +63,48 @@
         <div class="modal-content">
             <h2>版本信息</h2>
             <div style="text-align: left; font-size: 0.9rem; line-height: 1.8;">
-                <p><strong>当前版本：</strong><span id="currentVersion">v2.0.0</span></p>
-                <p><strong>更新时间：</strong><span id="updateTime">2026-02-27</span></p>
+                <p><strong>当前版本：</strong><span id="currentVersion">v2.5.0</span></p>
+                <p><strong>更新时间：</strong><span id="updateTime">2026-03-01</span></p>
                 <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
                 <h3 style="font-size: 1rem; margin-bottom: 10px;">更新日志</h3>
                 <div id="changelog" style="max-height: 200px; overflow-y: auto; padding-right: 10px;">
+                    <p><strong>v2.5.0 (2026-03-01)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>📱 优化手机端显示：改进画布高度计算，更精确适应手机浏览器UI</li>
+                        <li>🔧 优化合并逻辑：降低合并速度阈值（0.3→0.15），提高合并成功率</li>
+                        <li>🔧 增加碰撞迭代次数（16→20），更彻底解决水果重叠问题</li>
+                        <li>🔧 减小分离力度（0.5→0.3），让水果更容易接触合并</li>
+                        <li>🔧 添加重叠比例判断（>30%触发合并）</li>
+                        <li>🔧 优化窗口调整时的水果位置保持</li>
+                    </ul>
+                    <p><strong>v2.4.0 (2026-02-28)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>📱 优化手机端水果大小：所有水果 scale 值增加 0.01</li>
+                        <li>📱 提高最小画布宽度到 360px，水果更大更清晰</li>
+                    </ul>
+                    <p><strong>v2.3.0 (2026-02-28)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>🔧 优化合并逻辑：降低合并速度阈值（0.5→0.3）</li>
+                        <li>🔧 增加碰撞迭代次数（12→16）</li>
+                    </ul>
+                    <p><strong>v2.2.0 (2026-02-27)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>🎮 添加水平移动控制：释放前可左右拖动选择位置</li>
+                    </ul>
+                    <p><strong>v2.1.0 (2026-02-27)</strong></p>
+                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
+                        <li>🔧 修复版本按钮显示问题</li>
+                        <li>📱 优化画布尺寸和水果大小</li>
+                    </ul>
                     <p><strong>v2.0.0 (2026-02-27)</strong></p>
                     <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
                         <li>✨ 全新精美界面设计</li>
                         <li>🎨 渐变背景、圆角卡片、阴影效果</li>
-                        <li>💥 添加粒子特效：水果合并时的爆炸效果</li>
-                        <li>📱 优化响应式设计：完美适配移动端和桌面端</li>
-                        <li>🎯 添加预览轨迹：显示水果下落路径</li>
+                        <li>💥 添加粒子特效</li>
+                        <li>📱 优化响应式设计</li>
+                        <li>🎯 添加预览轨迹</li>
                         <li>💾 本地存储最高分</li>
                         <li>🔄 更流畅的动画和交互体验</li>
-                    </ul>
-                    <p><strong>v1.4.0 (2026-02-27)</strong></p>
-                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
-                        <li>🔧 修复点击水果立即游戏结束的问题</li>
-                    </ul>
-                    <p><strong>v1.3.0 (2026-02-27)</strong></p>
-                    <ul style="list-style: none; padding-left: 10px; margin: 5px 0;">
-                        <li>🔧 持续优化：性能改进、用户体验提升、代码质量重构</li>
                     </ul>
                 </div>
             </div>
