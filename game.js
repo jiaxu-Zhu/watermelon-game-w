@@ -33,11 +33,11 @@ class WatermelonGame {
             bounce: 0.3,
             wallBounce: 0.4,
             velocityThreshold: 0.1,
-            collisionIterations: 16, // 增加迭代次数，更彻底解决重叠
+            collisionIterations: 20, // 增加迭代次数，更彻底解决重叠
             dangerLineRatio: 0.15, // 危险线在顶部15%位置
             dropPosition: this.canvas.width / 2,
-            minSeparationForce: 0.5, // 最小分离力度
-            mergeSpeedThreshold: 0.3 // 合并速度阈值（相对速度小于此值才合并）- 降低以提高合并率
+            minSeparationForce: 0.3, // 减小最小分离力度，让水果更容易接触
+            mergeSpeedThreshold: 0.15 // 降低合并速度阈值，提高合并率
         };
 
         // 游戏对象
@@ -64,13 +64,14 @@ class WatermelonGame {
         const padding = 20; // 容器padding
         const modalSpace = 100; // 模态框预留空间
 
+        // 使用更精确的可用高度计算，考虑手机端浏览器UI
         const availableHeight = window.innerHeight - headerHeight - controlsHeight - padding - modalSpace;
         const maxWidth = window.innerWidth - 40; // 尽可能宽
         const aspectRatio = 2 / 3; // 宽高比 2:3
 
         // 根据可用高度计算最大宽度
-        const maxCanvasHeight = availableHeight;
-        const maxCanvasWidth = maxCanvasHeight * aspectRatio;
+        let maxCanvasHeight = availableHeight;
+        let maxCanvasWidth = maxCanvasHeight * aspectRatio;
 
         // 取较小值作为画布宽度，但至少保证最小尺寸（增加到360px以获得更大的水果）
         const canvasWidth = Math.max(360, Math.min(maxWidth, maxCanvasWidth));
@@ -80,6 +81,23 @@ class WatermelonGame {
         this.canvas.height = canvasHeight;
         this.canvas.style.width = canvasWidth + 'px';
         this.canvas.style.height = canvasHeight + 'px';
+
+        // 确保容器不会超出屏幕
+        const container = document.querySelector('.game-container');
+        if (container) {
+            const containerHeight = headerHeight + canvasHeight + controlsHeight + padding * 2;
+            if (containerHeight > window.innerHeight * 0.95) {
+                // 如果超出，重新计算画布高度
+                const newCanvasHeight = window.innerHeight * 0.95 - headerHeight - controlsHeight - padding * 2;
+                const newCanvasWidth = newCanvasHeight * aspectRatio;
+                if (newCanvasWidth >= 360) {
+                    this.canvas.width = newCanvasWidth;
+                    this.canvas.height = newCanvasHeight;
+                    this.canvas.style.width = newCanvasWidth + 'px';
+                    this.canvas.style.height = newCanvasHeight + 'px';
+                }
+            }
+        }
     }
 
     init() {
@@ -121,17 +139,33 @@ class WatermelonGame {
 
         // 窗口调整
         window.addEventListener('resize', () => {
+            // 保存当前水果位置比例
+            let currentFruitRatio = 0.5;
+            if (this.currentFruit) {
+                currentFruitRatio = this.currentFruit.x / this.canvas.width;
+            }
+
             this.setupCanvas();
             this.config.dropPosition = this.canvas.width / 2;
-            // 重新调整所有水果大小
+
+            // 重新调整所有水果大小和位置
             this.fruits.forEach(fruit => {
                 const newType = this.getFruitType(fruit.typeIndex);
+                const oldRadius = fruit.radius;
                 fruit.radius = newType.radius;
+
+                // 按比例调整位置，保持相对位置
+                fruit.x = (fruit.x / oldRadius) * newType.radius;
+                fruit.y = (fruit.y / oldRadius) * newType.radius;
             });
-            // 调整当前水果大小
+
+            // 调整当前水果大小和位置
             if (this.currentFruit) {
                 const newType = this.getFruitType(this.currentFruit.typeIndex);
+                const oldRadius = this.currentFruit.radius;
                 this.currentFruit.radius = newType.radius;
+                this.currentFruit.x = Math.max(this.currentFruit.radius, Math.min(this.canvas.width - this.currentFruit.radius, currentFruitRatio * this.canvas.width));
+                this.currentFruit.y = this.currentFruit.radius + 10;
             }
         });
 
@@ -339,7 +373,7 @@ class WatermelonGame {
                 const cos = Math.cos(angle);
                 const sin = Math.sin(angle);
 
-                // 分离重叠的水果 - 使用更激进的分离策略
+                // 分离重叠的水果 - 使用温和的分离策略，避免过度分离
                 // 根据质量比例分配分离距离，但确保最小分离力
                 const totalRadius = activeFruit.radius + other.radius;
                 const ratio1 = other.radius / totalRadius;
@@ -348,10 +382,10 @@ class WatermelonGame {
                 const separationX = overlap * cos;
                 const separationY = overlap * sin;
 
-                // 应用分离，确保至少移动最小分离力
+                // 应用分离，但使用更小的分离力度，让水果更容易保持接触
                 const minSeparation = this.config.minSeparationForce;
-                const actualSeparationX = separationX > 0 ? Math.max(separationX, minSeparation * cos) : Math.min(separationX, -minSeparation * cos);
-                const actualSeparationY = separationY > 0 ? Math.max(separationY, minSeparation * sin) : Math.min(separationY, -minSeparation * sin);
+                const actualSeparationX = separationX > 0 ? Math.max(separationX * 0.5, minSeparation * cos) : Math.min(separationX * 0.5, -minSeparation * cos);
+                const actualSeparationY = separationY > 0 ? Math.max(separationY * 0.5, minSeparation * sin) : Math.min(separationY * 0.5, -minSeparation * sin);
 
                 activeFruit.x += actualSeparationX * ratio1;
                 activeFruit.y += actualSeparationY * ratio1;
@@ -400,11 +434,16 @@ class WatermelonGame {
 
                 // 合并条件：相同等级 + 相对速度小 + 重叠（已满足）
                 // 放宽条件：只要相对速度小于阈值，或者两个都几乎静止
-                const bothStationary = Math.abs(activeFruit.vy) < 0.1 && Math.abs(other.vy) < 0.1 &&
-                                      Math.abs(activeFruit.vx) < 0.1 && Math.abs(other.vx) < 0.1;
+                // 进一步优化：考虑重叠深度，重叠越多越容易合并
+                const overlapRatio = overlap / (activeFruit.radius + other.radius);
+                const bothStationary = Math.abs(activeFruit.vy) < 0.08 && Math.abs(other.vy) < 0.08 &&
+                                      Math.abs(activeFruit.vx) < 0.08 && Math.abs(other.vx) < 0.08;
+
                 if (activeFruit.typeIndex === other.typeIndex &&
                     activeFruit.typeIndex < this.baseFruitTypes.length - 1 &&
-                    (relSpeed < this.config.mergeSpeedThreshold || bothStationary)) {
+                    (relSpeed < this.config.mergeSpeedThreshold ||
+                     bothStationary ||
+                     overlapRatio > 0.3)) { // 重叠超过30%也触发合并
 
                     // 延迟合并：记录待合并项，不立即修改数组
                     this.pendingMerges.push({
