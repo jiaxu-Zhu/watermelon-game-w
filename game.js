@@ -50,8 +50,8 @@ class WatermelonGame {
         this.pendingMerges = []; // 待处理的合并（延迟合并避免遍历时修改数组）
 
         // 版本信息
-        this.version = 'v2.4.0';
-        this.updateDate = '2026-02-28';
+        this.version = 'v2.5.0';
+        this.updateDate = '2026-03-01';
 
         // 初始化
         this.init();
