@@ -36,8 +36,8 @@ class WatermelonGame {
             collisionIterations: 20, // 增加迭代次数，更彻底解决重叠
             dangerLineRatio: 0.15, // 危险线在顶部15%位置
             dropPosition: this.canvas.width / 2,
-            minSeparationForce: 0.3, // 减小最小分离力度，让水果更容易接触
-            mergeSpeedThreshold: 0.15 // 降低合并速度阈值，提高合并率
+            minSeparationForce: 0.05, // 进一步减小最小分离力度，让水果更容易保持接触
+            mergeSpeedThreshold: 0.1 // 进一步降低合并速度阈值，提高合并率
         };
 
         // 游戏对象
@@ -373,8 +373,8 @@ class WatermelonGame {
                 const cos = Math.cos(angle);
                 const sin = Math.sin(angle);
 
-                // 分离重叠的水果 - 使用温和的分离策略，避免过度分离
-                // 根据质量比例分配分离距离，但确保最小分离力
+                // 分离重叠的水果 - 使用极温和的分离策略，让水果保持接触
+                // 根据质量比例分配分离距离，但确保最小分离力极小
                 const totalRadius = activeFruit.radius + other.radius;
                 const ratio1 = other.radius / totalRadius;
                 const ratio2 = activeFruit.radius / totalRadius;
@@ -382,10 +382,12 @@ class WatermelonGame {
                 const separationX = overlap * cos;
                 const separationY = overlap * sin;
 
-                // 应用分离，但使用更小的分离力度，让水果更容易保持接触
+                // 应用分离，但使用极小的分离力度，让水果更容易保持接触并合并
                 const minSeparation = this.config.minSeparationForce;
-                const actualSeparationX = separationX > 0 ? Math.max(separationX * 0.5, minSeparation * cos) : Math.min(separationX * 0.5, -minSeparation * cos);
-                const actualSeparationY = separationY > 0 ? Math.max(separationY * 0.5, minSeparation * sin) : Math.min(separationY * 0.5, -minSeparation * sin);
+                // 使用更小的系数，主要消除重叠，而不是完全分开
+                const separationFactor = 0.2; // 只分离20%的重叠量
+                const actualSeparationX = separationX > 0 ? Math.max(separationX * separationFactor, minSeparation * cos) : Math.min(separationX * separationFactor, -minSeparation * cos);
+                const actualSeparationY = separationY > 0 ? Math.max(separationY * separationFactor, minSeparation * sin) : Math.min(separationY * separationFactor, -minSeparation * sin);
 
                 activeFruit.x += actualSeparationX * ratio1;
                 activeFruit.y += actualSeparationY * ratio1;
@@ -443,7 +445,7 @@ class WatermelonGame {
                     activeFruit.typeIndex < this.baseFruitTypes.length - 1 &&
                     (relSpeed < this.config.mergeSpeedThreshold ||
                      bothStationary ||
-                     overlapRatio > 0.3)) { // 重叠超过30%也触发合并
+                     overlapRatio > 0.2)) { // 重叠超过20%也触发合并（降低阈值）
 
                     // 延迟合并：记录待合并项，不立即修改数组
                     this.pendingMerges.push({
